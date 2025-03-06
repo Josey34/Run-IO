@@ -1,56 +1,95 @@
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Button, Text, View } from "react-native";
-import { useDispatch } from "react-redux";
-import CustomModal from "../components/Modal";
-import { login } from "../redux/actions"; // Ensure the path is correct
+import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import CustomButton from "../components/CustomButton";
 
-const LoginScreen = () => {
-    const [modalVisible, setModalVisible] = useState(false);
+export default function LoginScreen() {
     const router = useRouter();
-    const dispatch = useDispatch();
+    const [username, setUsername] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
 
-    // Function to show modal before proceeding
-    const handleWarning = () => {
-        setModalVisible(true);
-    };
-
-    // Function when the user confirms the modal
-    const handleConfirm = () => {
-        setModalVisible(false);
-        router.push("/form_data_screen");
-    };
-
-    // Function for login action
     const handleLogin = () => {
-        const user = { username: "exampleUser" }; // Replace with actual user data
-        dispatch(login(user));
-        router.push("/home_screen"); // Navigate to home after login
+        // Replace this with your actual authentication logic
+        console.log("Logging in with:", username, password);
+        // Navigate to the home screen after login
+        router.push("/warning_screen");
     };
 
     return (
-        <View className="flex-1 justify-center items-center bg-white px-4">
-            <Text className="text-xl font-semibold mb-4">Login Screen</Text>
+        <ImageBackground
+            source={require("../assets/images/running.jpg")} // Update the path to your image
+            style={styles.background}
+            resizeMode="cover"
+        >
+            <BlurView intensity={50} style={styles.blurContainer}>
+                <Text style={styles.title}>Login</Text>
 
-            {/* Show Warning Modal */}
-            <Button
-                title="Show Warning"
-                onPress={handleWarning}
-                color="#ff6600"
-            />
+                <Text style={styles.inputTitle}>Username:</Text>
+                <TextInput
+                    style={styles.input}
+                    value={username}
+                    onChangeText={setUsername}
+                />
 
-            {/* Show Login Button */}
-            <Button title="Login" onPress={handleLogin} color="#007bff" />
-
-            {/* Modal Component */}
-            <CustomModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                message="Do you have any pre-existing sickness?"
-                onConfirm={handleConfirm}
-            />
-        </View>
+                <Text style={styles.inputTitle}>Password:</Text>
+                <TextInput
+                    style={styles.input}
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                />
+                <Text style={styles.registerText}>
+                    Don't have an account?{" "}
+                    <Text
+                        style={styles.registerLink}
+                        onPress={() => router.push("/register_screen")}
+                    >
+                        Register Now
+                    </Text>
+                </Text>
+                <CustomButton title="Login" onPress={handleLogin} />
+            </BlurView>
+        </ImageBackground>
     );
-};
+}
 
-export default LoginScreen;
+const styles = StyleSheet.create({
+    background: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    blurContainer: {
+        padding: 20,
+        borderRadius: 10,
+        width: "90%",
+        alignItems: "center",
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 20,
+        color: "black",
+    },
+    inputTitle: {
+        alignSelf: "flex-start",
+        marginBottom: 5,
+        color: "black",
+    },
+    input: {
+        width: "100%",
+        padding: 10,
+        borderRadius: 5,
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        marginBottom: 15,
+    },
+    registerText: {
+        alignSelf: "flex-start",
+        color: "black",
+    },
+    registerLink: {
+        color: "#007bff",
+        fontWeight: "bold",
+    },
+});

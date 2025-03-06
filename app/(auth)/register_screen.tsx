@@ -1,34 +1,96 @@
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Button, Text, TextInput, View } from "react-native";
+import React, { useState } from "react";
+import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import CustomButton from "../components/CustomButton";
+import CustomModal from "../components/CustomModal";
 
 export default function RegisterScreen() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const router = useRouter();
+    const [username, setUsername] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-    const submitRegister = () => {
-        alert("Registered Successfully!");
-        router.push("/form_data_screen");
+    const handleRegister = () => {
+        setModalVisible(true);
     };
 
     return (
-        <View className="flex-1 justify-center items-center bg-white">
-            <Text className="text-2xl font-bold">Register</Text>
-            <TextInput
-                className="border p-2 w-64 my-2"
-                placeholder="Email"
-                onChangeText={setEmail}
-                value={email}
+        <ImageBackground
+            source={require("../assets/images/running.jpg")} // Update the path to your image
+            style={styles.background}
+            resizeMode="cover"
+        >
+            <BlurView intensity={50} style={styles.blurContainer}>
+                <Text style={styles.title}>Register</Text>
+
+                <Text style={styles.inputTitle}>Username:</Text>
+                <TextInput
+                    style={styles.input}
+                    value={username}
+                    onChangeText={setUsername}
+                />
+
+                <Text style={styles.inputTitle}>Email:</Text>
+                <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                />
+
+                <Text style={styles.inputTitle}>Password:</Text>
+                <TextInput
+                    style={styles.input}
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                />
+
+                <CustomButton title="Register" onPress={handleRegister} />
+            </BlurView>
+            <CustomModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                message="Registered Successfully!"
+                onConfirm={() => {
+                    setModalVisible(false);
+                    router.push("/login_screen");
+                }}
             />
-            <TextInput
-                className="border p-2 w-64 my-2"
-                placeholder="Password"
-                secureTextEntry
-                onChangeText={setPassword}
-                value={password}
-            />
-            <Button title="Register" onPress={submitRegister} />
-        </View>
+        </ImageBackground>
     );
 }
+
+const styles = StyleSheet.create({
+    background: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    blurContainer: {
+        padding: 20,
+        borderRadius: 10,
+        width: "90%",
+        alignItems: "center",
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 20,
+        color: "black",
+    },
+    inputTitle: {
+        alignSelf: "flex-start",
+        marginBottom: 5,
+        color: "black",
+    },
+    input: {
+        width: "100%",
+        padding: 10,
+        borderRadius: 5,
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        marginBottom: 15,
+    },
+});
