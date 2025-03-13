@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const CustomModal = ({ visible, onClose, message, onConfirm }) => {
+const CustomModal = ({ visible, onClose, message, onConfirm }: any) => {
     return (
         <Modal visible={visible} transparent={true} animationType="slide">
             <View style={styles.modalContainer}>

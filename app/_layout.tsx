@@ -7,7 +7,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Provider } from "react-redux";
 import { TailwindProvider } from "tailwindcss-react-native";
-import useColorScheme from "../hooks/useColorScheme";
+import useColorScheme from "./hooks/useColorScheme";
 import store from "./redux/store";
 
 export default function Layout() {
