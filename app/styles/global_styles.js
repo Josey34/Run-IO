@@ -39,27 +39,44 @@ const globalStyles = StyleSheet.create({
     runContainer: {
         backgroundColor: "#fff",
         borderRadius: 10,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 15,
+        paddingLeft: 40,
         marginBottom: 20,
+        flexDirection: "row",  // Placing map and text side by side
+        justifyContent: "space-between",  // Ensures space between text and map
+        alignItems: "center",
     },
     runTitle: {
         fontSize: 18,
         fontWeight: "bold",
+        color: "#333",
     },
     runDistance: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: "bold",
-        marginTop: 5,
+        color: "#333",
+        marginBottom: 10, // Added a bit of space below the distance
     },
-    mapImage: {
-        width: 120,
-        height: 80,
+    mapContainer: {
+        width: "50%",  // Map takes 50% of the width
+        height: 120,  // Adjusted height for a more compact map
+        borderRadius: 10,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "#dcdcdc",  // Light border color for the map container
+        backgroundColor: "#fff",
+        alignItems: 'center',
+    },
+    mapView: {
+        width: "100%",
+        height: "100%",
         borderRadius: 10,
     },
     rowContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 20,
+    },
+    weatherComingSoonContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
         marginBottom: 20,
@@ -79,6 +96,15 @@ const globalStyles = StyleSheet.create({
     weatherDate: {
         fontSize: 14,
     },
+    weatherIcon: {
+        width: 64,
+        height: 64,
+    },
+    weatherCity: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginTop: 8,
+    },
     comingSoon: {
         backgroundColor: "#fff",
         borderRadius: 10,
@@ -86,6 +112,7 @@ const globalStyles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         padding: 15,
+        fontWeight: "bold",
     },
     comingSoonText: {
         fontSize: 16,

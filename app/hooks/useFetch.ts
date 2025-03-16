@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
 const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
-const BASE_URL_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_URL}`;
+const BASE_URL_WEATHER = `https://api.weatherapi.com/v1/current.json`;
 
 interface Article {
     title: string;
@@ -14,10 +14,11 @@ interface Article {
 }
 
 interface WeatherData {
-    temp: number;
-    feels_like: number;
+    temp_c: number;
+    feelslike_c: number;
     humidity: number;
-    weather: [{ description: string; icon: string }];
+    condition: { text: string; icon: string };
+    location: { name: string }; // Include city name
     // Add other weather fields if needed
 }
 
@@ -48,13 +49,11 @@ const useFetch = <T>(
                 if (fetchWeather && lat && lon) {
                     const weatherResponse = await axios.get(BASE_URL_WEATHER, {
                         params: {
-                            lat,
-                            lon,
-                            exclude: "hourly,daily",
-                            appid: API_KEY_WEATHER,
+                            key: API_KEY_WEATHER,
+                            q: `${lat},${lon}`,
                         },
                     });
-                    setWeather(weatherResponse.data.current);
+                    setWeather(weatherResponse.data);
                 }
             } catch (err: any) {
                 setError(err.message);

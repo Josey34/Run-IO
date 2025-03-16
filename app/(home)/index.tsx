@@ -12,8 +12,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 import useFetch from "../hooks/useFetch";
-import globalStyles from "../styles/global_styles"; // Import globalStyles
+import globalStyles from "../styles/global_styles";
 
 interface Article {
     title: string;
@@ -58,12 +59,10 @@ const HomeScreen = () => {
         getLocation();
     }, []);
 
-    // Function to load more articles when user scrolls down
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const { layoutMeasurement, contentOffset, contentSize } =
             event.nativeEvent;
 
-        // If user scrolls near the bottom, load more articles
         if (
             layoutMeasurement.height + contentOffset.y >=
             contentSize.height - 20
@@ -72,16 +71,25 @@ const HomeScreen = () => {
         }
     };
 
+    const getCurrentDate = () => {
+        const date = new Date();
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+        const year = date.getFullYear();
+        return `${day}:${month}:${year}`;
+    };
+
+    console.log("====================================");
+    console.log(weather);
+    console.log("====================================");
+
     return (
         <View style={globalStyles.container}>
-            {" "}
-            {/* Use global style here */}
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={400}
             >
-                {/* Header Section */}
                 <View style={globalStyles.header}>
                     <Text style={globalStyles.welcome}>Welcome</Text>
                     <Image
@@ -103,41 +111,76 @@ const HomeScreen = () => {
                         <Text style={globalStyles.runTitle}>Today's Run</Text>
                         <Text style={globalStyles.runDistance}>0 Km</Text>
                     </View>
-                    <Image
-                        source={require("../assets/images/running.jpg")}
-                        style={globalStyles.mapImage}
-                    />
-                </View>
-
-                {/* Weather Section */}
-                <View style={globalStyles.weatherContainer}>
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#1e90ff" />
-                    ) : error ? (
-                        <Text style={globalStyles.errorText}>
-                            Error: {error}
-                        </Text>
-                    ) : locationError ? (
-                        <Text style={globalStyles.errorText}>
-                            {locationError}
-                        </Text>
-                    ) : weather ? (
-                        <>
-                            <Text style={globalStyles.weatherTemp}>
-                                {(weather.temp - 273.15).toFixed(1)} °C
-                            </Text>
-                            <Text style={globalStyles.weatherDate}>
-                                {weather.weather[0].description}
-                            </Text>
-                        </>
+                    {latitude && longitude ? (
+                        <View style={globalStyles.mapContainer}>
+                            <MapView
+                                style={globalStyles.mapView}
+                                initialRegion={{
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    latitudeDelta: 0.01,
+                                    longitudeDelta: 0.01,
+                                }}
+                            >
+                                <Marker
+                                    coordinate={{
+                                        latitude: latitude,
+                                        longitude: longitude,
+                                    }}
+                                    title={"Your Location"}
+                                />
+                            </MapView>
+                        </View>
                     ) : (
-                        <Text style={globalStyles.errorText}>
-                            No weather data available
-                        </Text>
+                        <ActivityIndicator size="large" color="#1e90ff" />
                     )}
                 </View>
+                <View style={globalStyles.weatherComingSoonContainer}>
+                    {/* Weather Section */}
+                    <View style={globalStyles.weatherContainer}>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#1e90ff" />
+                        ) : error ? (
+                            <Text style={globalStyles.errorText}>
+                                Error: {error}
+                            </Text>
+                        ) : locationError ? (
+                            <Text style={globalStyles.errorText}>
+                                {locationError}
+                            </Text>
+                        ) : weather ? (
+                            <>
+                                <Text style={globalStyles.weatherTemp}>
+                                    {weather.temp_c} °C
+                                </Text>
+                                <Text style={globalStyles.weatherDate}>
+                                    {weather.condition.text}
+                                </Text>
+                                <Image
+                                    source={{
+                                        uri: `https:${weather.condition.icon}`,
+                                    }}
+                                    style={globalStyles.weatherIcon}
+                                />
+                                <Text style={globalStyles.weatherCity}>
+                                    {weather.location.name}
+                                </Text>
+                                <Text style={globalStyles.weatherDate}>
+                                    {getCurrentDate()}
+                                </Text>
+                            </>
+                        ) : (
+                            <Text style={globalStyles.errorText}>
+                                No weather data available
+                            </Text>
+                        )}
+                    </View>
 
-                {/* News Section */}
+                    <View style={globalStyles.comingSoon}>
+                        <Text>Coming Soon</Text>
+                    </View>
+                </View>
+
                 <View style={globalStyles.newsContainer}>
                     <Text style={globalStyles.newsTitle}>
                         Latest Sports News
