@@ -1,5 +1,5 @@
-import { useState, useContext, createContext, ReactNode } from "react";
-import { register, login, saveFormInput } from "../api"; // Import the API functions
+import { useState, useContext, createContext, ReactNode, FC } from "react";
+import { register, login, saveFormInput } from "../api/api_service"; // Import the API functions
 
 interface AuthContextType {
     user: any;
@@ -13,9 +13,15 @@ interface AuthContextType {
     logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+    undefined
+);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [user, setUser] = useState<any>(null);
 
     const registerUser = async (
