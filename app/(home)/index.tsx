@@ -71,12 +71,9 @@ const HomeScreen = () => {
         }
     };
 
-    const getCurrentDate = () => {
-        const date = new Date();
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
-        const year = date.getFullYear();
-        return `${day}:${month}:${year}`;
+    const getTimeFromLocalTime = (localtime: string) => {
+        const time = localtime.split(" ")[1];
+        return time;
     };
 
     console.log("====================================");
@@ -150,23 +147,29 @@ const HomeScreen = () => {
                             </Text>
                         ) : weather ? (
                             <>
-                                <Text style={globalStyles.weatherTemp}>
-                                    {weather.temp_c} °C
-                                </Text>
-                                <Text style={globalStyles.weatherDate}>
-                                    {weather.condition.text}
-                                </Text>
-                                <Image
-                                    source={{
-                                        uri: `https:${weather.condition.icon}`,
-                                    }}
-                                    style={globalStyles.weatherIcon}
-                                />
+                                <View style={globalStyles.weatherSection}>
+                                    <Image
+                                        source={{
+                                            uri: `https:${weather.current.condition.icon}`,
+                                        }}
+                                        style={globalStyles.weatherIcon}
+                                    />
+                                    <View>
+                                        <Text style={globalStyles.weatherTemp}>
+                                            {weather.current.temp_c} °C
+                                        </Text>
+                                        <Text style={globalStyles.weatherText}>
+                                            {weather.current.condition.text}
+                                        </Text>
+                                    </View>
+                                </View>
                                 <Text style={globalStyles.weatherCity}>
                                     {weather.location.name}
                                 </Text>
                                 <Text style={globalStyles.weatherDate}>
-                                    {getCurrentDate()}
+                                    {getTimeFromLocalTime(
+                                        weather.location.localtime
+                                    )}
                                 </Text>
                             </>
                         ) : (
@@ -175,7 +178,6 @@ const HomeScreen = () => {
                             </Text>
                         )}
                     </View>
-
                     <View style={globalStyles.comingSoon}>
                         <Text>Coming Soon</Text>
                     </View>

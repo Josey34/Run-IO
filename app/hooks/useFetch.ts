@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
 const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
-const BASE_URL_WEATHER = `https://api.weatherapi.com/v1/current.json`;
+const BASE_URL_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_URL}`;
 
 interface Article {
     title: string;
@@ -13,13 +13,26 @@ interface Article {
     source: { name: string };
 }
 
+interface WeatherCondition {
+    text: string;
+    icon: string;
+}
+
 interface WeatherData {
     temp_c: number;
     feelslike_c: number;
     humidity: number;
-    condition: { text: string; icon: string };
-    location: { name: string }; // Include city name
-    // Add other weather fields if needed
+    condition: WeatherCondition;
+}
+
+interface LocationData {
+    name: string;
+    localtime: string;
+}
+
+interface WeatherResponse {
+    current: WeatherData;
+    location: LocationData;
 }
 
 const useFetch = <T>(
@@ -29,7 +42,7 @@ const useFetch = <T>(
     lon?: number
 ) => {
     const [data, setData] = useState<T[]>([]);
-    const [weather, setWeather] = useState<WeatherData | null>(null);
+    const [weather, setWeather] = useState<WeatherResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
