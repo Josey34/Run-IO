@@ -1,7 +1,8 @@
 import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
+import { saveFormInput } from "../api/api_service"; // Import the saveFormInput function from API
 import CustomButton from "../components/CustomButton";
 
 const FormDataScreen: React.FC = () => {
@@ -11,6 +12,7 @@ const FormDataScreen: React.FC = () => {
     const [weight, setWeight] = useState<string>("");
     const [height, setHeight] = useState<string>("");
     const [gender, setGender] = useState<string>("");
+    const [uid, setUid] = useState<string>("YOUR_USER_ID"); // Replace with the actual user ID
 
     const [errors, setErrors] = useState<{
         age?: string;
@@ -19,7 +21,7 @@ const FormDataScreen: React.FC = () => {
         gender?: string;
     }>({});
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const newErrors: {
             age?: string;
             weight?: string;
@@ -40,9 +42,30 @@ const FormDataScreen: React.FC = () => {
                 setErrors({});
             }, 3000);
         } else {
-            // Process the data
-            console.log("Data submitted:", { age, weight, height, gender });
-            router.push("/(home)");
+            try {
+                const response = await saveFormInput(uid, {
+                    age,
+                    weight,
+                    height,
+                    gender,
+                });
+                if (response.id) {
+                    console.log("Data submitted:", {
+                        age,
+                        weight,
+                        height,
+                        gender,
+                    });
+                    router.push("/(home)");
+                } else {
+                    Alert.alert(
+                        "Submission Failed",
+                        response.error || "Unknown error occurred"
+                    );
+                }
+            } catch (error) {
+                Alert.alert("Submission Failed", error.message);
+            }
         }
     };
 

@@ -1,7 +1,14 @@
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import {
+    Alert,
+    ImageBackground,
+    StyleSheet,
+    Text,
+    TextInput,
+} from "react-native";
+import { login } from "../api/api_service"; // Import the login function from API
 import CustomButton from "../components/CustomButton";
 
 export default function LoginScreen() {
@@ -9,11 +16,21 @@ export default function LoginScreen() {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
-    const handleLogin = () => {
-        // Replace this with your actual authentication logic
-        console.log("Logging in with:", username, password);
-        // Navigate to the home screen after login
-        router.push("/warning_screen");
+    const handleLogin = async () => {
+        try {
+            const response = await login(username, password);
+            if (response.uid) {
+                // Navigate to the home screen after login
+                router.push("/warning_screen");
+            } else {
+                Alert.alert(
+                    "Login Failed",
+                    response.error || "Unknown error occurred"
+                );
+            }
+        } catch (error) {
+            Alert.alert("Login Failed", error.message);
+        }
     };
 
     return (

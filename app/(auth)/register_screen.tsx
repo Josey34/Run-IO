@@ -1,7 +1,14 @@
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import {
+    Alert,
+    ImageBackground,
+    StyleSheet,
+    Text,
+    TextInput,
+} from "react-native";
+import { register } from "../api/api_service"; // Import the register function from API
 import CustomButton from "../components/CustomButton";
 import CustomModal from "../components/CustomModal";
 
@@ -12,8 +19,20 @@ export default function RegisterScreen() {
     const [password, setPassword] = useState<string>("");
     const [modalVisible, setModalVisible] = useState<boolean>(false);
 
-    const handleRegister = () => {
-        setModalVisible(true);
+    const handleRegister = async () => {
+        try {
+            const response = await register(email, password, username);
+            if (response.uid) {
+                setModalVisible(true);
+            } else {
+                Alert.alert(
+                    "Registration Failed",
+                    response.error || "Unknown error occurred"
+                );
+            }
+        } catch (error) {
+            Alert.alert("Registration Failed", error.message);
+        }
     };
 
     return (
