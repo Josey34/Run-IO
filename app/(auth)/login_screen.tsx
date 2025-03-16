@@ -8,27 +8,21 @@ import {
     Text,
     TextInput,
 } from "react-native";
-import { login } from "../api/api_service"; // Import the login function from API
 import CustomButton from "../components/CustomButton";
+import { useAuth } from "../hooks/useAuth"; // Import the useAuth hook
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [username, setUsername] = useState<string>("");
+    const { loginUser } = useAuth(); // Destructure the loginUser function from useAuth
+    const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
     const handleLogin = async () => {
         try {
-            const response = await login(username, password);
-            if (response.uid) {
-                // Navigate to the home screen after login
-                router.push("/warning_screen");
-            } else {
-                Alert.alert(
-                    "Login Failed",
-                    response.error || "Unknown error occurred"
-                );
-            }
-        } catch (error) {
+            await loginUser(email, password);
+            // Navigate to the home screen after login
+            router.push("/warning_screen");
+        } catch (error: any) {
             Alert.alert("Login Failed", error.message);
         }
     };
@@ -42,11 +36,12 @@ export default function LoginScreen() {
             <BlurView intensity={50} style={styles.blurContainer}>
                 <Text style={styles.title}>Login</Text>
 
-                <Text style={styles.inputTitle}>Username:</Text>
+                <Text style={styles.inputTitle}>Email:</Text>
                 <TextInput
                     style={styles.input}
-                    value={username}
-                    onChangeText={setUsername}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
                 />
 
                 <Text style={styles.inputTitle}>Password:</Text>

@@ -63,7 +63,7 @@ const FormDataScreen: React.FC = () => {
                         response.error || "Unknown error occurred"
                     );
                 }
-            } catch (error) {
+            } catch (error: any) {
                 Alert.alert("Submission Failed", error.message);
             }
         }

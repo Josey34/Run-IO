@@ -8,12 +8,13 @@ import {
     Text,
     TextInput,
 } from "react-native";
-import { register } from "../api/api_service"; // Import the register function from API
 import CustomButton from "../components/CustomButton";
 import CustomModal from "../components/CustomModal";
+import { useAuth } from "../hooks/useAuth"; // Import the useAuth hook
 
 export default function RegisterScreen() {
     const router = useRouter();
+    const { registerUser } = useAuth(); // Destructure the registerUser function from useAuth
     const [username, setUsername] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
@@ -21,16 +22,9 @@ export default function RegisterScreen() {
 
     const handleRegister = async () => {
         try {
-            const response = await register(email, password, username);
-            if (response.uid) {
-                setModalVisible(true);
-            } else {
-                Alert.alert(
-                    "Registration Failed",
-                    response.error || "Unknown error occurred"
-                );
-            }
-        } catch (error) {
+            await registerUser(email, password, username);
+            setModalVisible(true);
+        } catch (error: any) {
             Alert.alert("Registration Failed", error.message);
         }
     };

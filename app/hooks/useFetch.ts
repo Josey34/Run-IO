@@ -6,6 +6,8 @@ const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
 const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
 const BASE_URL_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_URL}`;
 
+console.log(API_KEY_NEWS, BASE_URL_NEWS, API_KEY_WEATHER, BASE_URL_WEATHER);
+
 interface Article {
     title: string;
     description?: string;

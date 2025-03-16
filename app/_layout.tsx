@@ -28,14 +28,14 @@ export default function Layout() {
                         {/* Wrap your application with AuthProvider */}
                         <Stack>
                             {/* Default route is now (auth)/welcome_screen */}
-                            {/* <Stack.Screen
+                            <Stack.Screen
                                 name="./(auth)/welcome_screen.tsx"
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
                                 name="(auth)"
                                 options={{ headerShown: false }}
-                            /> */}
+                            />
                             <Stack.Screen
                                 name="(home)"
                                 options={{ headerShown: false }}

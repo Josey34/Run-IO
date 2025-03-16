@@ -1,16 +1,16 @@
 const API_URL = 'http://localhost:3000/api'; // Update with your backend URL
 
-export const register = async (email, password, displayName) => {
-    const response = await fetch(`${API_URL}/auth/register`, {
+export const register = async (email, password) => {
+    const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, displayName })
+        body: JSON.stringify({ email, password })
     });
     return response.json();
 };
 
 export const login = async (email, password) => {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -19,7 +19,7 @@ export const login = async (email, password) => {
 };
 
 export const saveFormInput = async (uid, formData) => {
-    const response = await fetch(`${API_URL}/form/save`, {
+    const response = await fetch(`${API_URL}/store-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid, formData })
