@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    FlatList,
     Image,
     NativeScrollEvent,
     NativeSyntheticEvent,
@@ -75,10 +74,6 @@ const HomeScreen = () => {
         const time = localtime.split(" ")[1];
         return time;
     };
-
-    console.log("====================================");
-    console.log(weather);
-    console.log("====================================");
 
     return (
         <View style={globalStyles.container}>
@@ -188,18 +183,21 @@ const HomeScreen = () => {
                         Latest Sports News
                     </Text>
 
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#1e90ff" />
-                    ) : error ? (
-                        <Text style={globalStyles.errorText}>
-                            Error: {error}
-                        </Text>
-                    ) : data.length > 0 ? (
-                        <FlatList
-                            data={data.slice(0, visibleNews)}
-                            keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item }) => (
-                                <View style={globalStyles.newsItem}>
+                    <ScrollView
+                        nestedScrollEnabled
+                        onScroll={handleScroll}
+                        scrollEventThrottle={400}
+                        style={{ maxHeight: 400 }} // Adjust the height as needed
+                    >
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#1e90ff" />
+                        ) : error ? (
+                            <Text style={globalStyles.errorText}>
+                                Error: {error}
+                            </Text>
+                        ) : (
+                            data.slice(0, visibleNews).map((item, index) => (
+                                <View key={index} style={globalStyles.newsItem}>
                                     {item.urlToImage && (
                                         <Image
                                             source={{ uri: item.urlToImage }}
@@ -220,13 +218,9 @@ const HomeScreen = () => {
                                         </Text>
                                     </View>
                                 </View>
-                            )}
-                        />
-                    ) : (
-                        <Text style={globalStyles.errorText}>
-                            No articles available
-                        </Text>
-                    )}
+                            ))
+                        )}
+                    </ScrollView>
                 </View>
 
                 {/* Navigation Button */}

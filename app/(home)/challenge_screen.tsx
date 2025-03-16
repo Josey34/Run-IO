@@ -112,27 +112,34 @@ const ChallengeScreen = () => {
                 data={filteredChallenges}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <View style={styles.challengeItem}>
-                        <View style={styles.iconContainer}>
-                            <FontAwesome5
-                                name="running"
-                                size={20}
-                                color="#000"
-                            />
-                        </View>
-                        <View style={styles.challengeInfo}>
-                            <Text style={styles.challengeType}>
-                                {item.type}
-                            </Text>
-                            <Text style={styles.challengeDetails}>
-                                Distance: {item.distance}
-                            </Text>
-                            <Text style={styles.challengeDetails}>
-                                Pace: {item.pace}
-                            </Text>
-                            <Text style={styles.challengeDetails}>
-                                Duration: {item.duration}
-                            </Text>
+                    <View style={{ flexDirection: "row", marginBottom: 20 }}>
+                        <View style={styles.challengeItem}>
+                            <View style={styles.iconContainer}>
+                                <FontAwesome5
+                                    name="running"
+                                    size={20}
+                                    color="#000"
+                                />
+                            </View>
+                            <View style={styles.challengeInfo}>
+                                <View style={styles.infoTop}>
+                                    <Text style={styles.challengeType}>
+                                        {item.type}
+                                    </Text>
+                                    <Text style={styles.challengeDistance}>
+                                        {item.distance}
+                                    </Text>
+                                </View>
+                                <View style={styles.separator} />
+                                <View style={styles.infoBottom}>
+                                    <Text style={styles.challengeDetails}>
+                                        Pace: {item.pace}
+                                    </Text>
+                                    <Text style={styles.challengeDetails}>
+                                        Duration: {item.duration}
+                                    </Text>
+                                </View>
+                            </View>
                         </View>
                         <View style={styles.actionButtons}>
                             <TouchableOpacity style={styles.checkButton}>
@@ -235,6 +242,8 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
+        marginTop: 10,
+        flex: 1,
     },
     iconContainer: {
         backgroundColor: "#ddd",
@@ -248,18 +257,38 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: 10,
     },
+    infoTop: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
     challengeType: {
         fontSize: 16,
         fontWeight: "bold",
         color: "#000",
+    },
+    challengeDistance: {
+        fontSize: 16,
+        color: "#000",
+    },
+    separator: {
+        height: 1,
+        backgroundColor: "#ddd",
+        marginVertical: 5,
+    },
+    infoBottom: {
+        flexDirection: "row",
+        justifyContent: "space-between",
     },
     challengeDetails: {
         fontSize: 12,
         color: "#555",
     },
     actionButtons: {
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: "column",
+        justifyContent: "center",
+        marginTop: 10,
+        marginLeft: 10,
     },
     checkButton: {
         backgroundColor: "#ddd",
@@ -268,7 +297,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         alignItems: "center",
         justifyContent: "center",
-        marginRight: 10,
+        marginBottom: 10,
     },
     cancelButton: {
         backgroundColor: "#ddd",
@@ -277,6 +306,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         alignItems: "center",
         justifyContent: "center",
+        marginBottom: 10,
     },
 });
 
