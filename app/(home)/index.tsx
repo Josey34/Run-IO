@@ -6,12 +6,14 @@ import {
     Image,
     NativeScrollEvent,
     NativeSyntheticEvent,
+    RefreshControl,
     ScrollView,
     Text,
-    TouchableOpacity,
     View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import CustomButton from "../components/CustomButton";
+import { useAuth } from "../hooks/useAuth";
 import useFetch from "../hooks/useFetch";
 import globalStyles from "../styles/global_styles";
 
@@ -24,16 +26,18 @@ interface Article {
 
 const HomeScreen = () => {
     const router = useRouter();
+    const { logout } = useAuth();
     const [latitude, setLatitude] = useState<number | undefined>(0);
     const [longitude, setLongitude] = useState<number | undefined>(0);
     const [locationError, setLocationError] = useState<string | null>(null);
-    const { data, weather, loading, error } = useFetch<Article[]>(
+    const { data, weather, loading, error, refetch } = useFetch<Article[]>(
         "sports",
         true,
         latitude,
         longitude
     );
     const [visibleNews, setVisibleNews] = useState(2);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         const getLocation = async () => {
@@ -70,14 +74,31 @@ const HomeScreen = () => {
         }
     };
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await refetch();
+        setRefreshing(false);
+    };
+
     const getTimeFromLocalTime = (localtime: string) => {
         const time = localtime.split(" ")[1];
         return time;
     };
 
+    const handleLogout = () => {
+        logout();
+        router.replace("/(auth)/login_screen");
+    };
+
     return (
         <View style={globalStyles.container}>
             <ScrollView
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />
+                }
                 showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={400}
@@ -223,15 +244,12 @@ const HomeScreen = () => {
                     </ScrollView>
                 </View>
 
-                {/* Navigation Button */}
-                <TouchableOpacity
-                    style={globalStyles.button}
-                    onPress={() => router.push("/(auth)/welcome_screen")}
-                >
-                    <Text style={globalStyles.buttonText}>
-                        Go to Welcome Screen
-                    </Text>
-                </TouchableOpacity>
+                {/* Logout Button */}
+                <CustomButton
+                    title="Logout"
+                    onPress={handleLogout}
+                    style={{ backgroundColor: "#FF0000" }}
+                />
             </ScrollView>
         </View>
     );

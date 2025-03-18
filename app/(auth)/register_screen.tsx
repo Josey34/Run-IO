@@ -1,37 +1,30 @@
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import {
-    Alert,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TextInput,
-} from "react-native";
+import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import { ErrorModalEmitter } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
-import CustomModal from "../components/CustomModal";
-import { useAuth } from "../hooks/useAuth"; // Import the useAuth hook
+import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterScreen() {
     const router = useRouter();
-    const { registerUser } = useAuth(); // Destructure the registerUser function from useAuth
+    const { registerUser } = useAuth();
     const [username, setUsername] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
-    const [modalVisible, setModalVisible] = useState<boolean>(false);
 
     const handleRegister = async () => {
         try {
             await registerUser(email, password, username);
-            setModalVisible(true);
+            router.push("/login_screen");
         } catch (error: any) {
-            Alert.alert("Registration Failed", error.message);
+            ErrorModalEmitter.emit("SHOW_ERROR", error.message); // Emit error message
         }
     };
 
     return (
         <ImageBackground
-            source={require("../assets/images/running.jpg")} // Update the path to your image
+            source={require("../assets/images/running.jpg")}
             style={styles.background}
             resizeMode="cover"
         >
@@ -63,15 +56,6 @@ export default function RegisterScreen() {
 
                 <CustomButton title="Register" onPress={handleRegister} />
             </BlurView>
-            <CustomModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                message="Registered Successfully!"
-                onConfirm={() => {
-                    setModalVisible(false);
-                    router.push("/login_screen");
-                }}
-            />
         </ImageBackground>
     );
 }

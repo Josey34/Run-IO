@@ -1,35 +1,29 @@
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import {
-    Alert,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TextInput,
-} from "react-native";
+import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import { ErrorModalEmitter } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
-import { useAuth } from "../hooks/useAuth"; // Import the useAuth hook
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginScreen() {
     const router = useRouter();
-    const { loginUser } = useAuth(); // Destructure the loginUser function from useAuth
+    const { loginUser } = useAuth();
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
     const handleLogin = async () => {
         try {
             await loginUser(email, password);
-            // Navigate to the home screen after login
             router.push("/warning_screen");
         } catch (error: any) {
-            Alert.alert("Login Failed", error.message);
+            ErrorModalEmitter.emit("SHOW_ERROR", error.message);
         }
     };
 
     return (
         <ImageBackground
-            source={require("../assets/images/running.jpg")} // Update the path to your image
+            source={require("../assets/images/running.jpg")}
             style={styles.background}
             resizeMode="cover"
         >

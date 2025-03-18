@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useState } from "react";
-import { login, register, saveFormInput } from "../api/api_service"; // Import the API functions
+import { login, register, saveFormInput } from "../api/api_service";
 
 interface AuthContextType {
     user: any;
@@ -26,8 +26,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const registerUser = async (email: string, password: string) => {
         const response = await register(email, password);
-        console.log("register", email, password);
-
         if (response.uid) {
             setUser({ uid: response.uid, email });
         } else {
@@ -36,19 +34,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     const loginUser = async (email: string, password: string) => {
-        console.log("loginUser", email, password);
         const response = await login(email, password);
-        console.log("====================================");
-        console.log(response);
-        console.log("====================================");
         if (response.uid) {
             setUser({ uid: response.uid, email });
         } else {
-            console.log(
-                "==================================== MASUKKK sini",
-                response.error
-            );
-
             throw new Error(response.error || "Login failed");
         }
     };
@@ -62,6 +51,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const logout = () => {
         setUser(null);
+        // Clear any session-related data here (e.g., AsyncStorage, localStorage, etc.)
     };
 
     return (
