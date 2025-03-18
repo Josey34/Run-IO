@@ -1,11 +1,9 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 
-// const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
-const API_KEY_NEWS = `b1067262a25e4627af88523baac1a7ba`;
+const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
-// const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
-const API_KEY_WEATHER = `fe946d28a2f647dd928175124251303`;
+const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
 const BASE_URL_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_URL}`;
 
 console.log(API_KEY_NEWS, BASE_URL_NEWS, API_KEY_WEATHER, BASE_URL_WEATHER);
