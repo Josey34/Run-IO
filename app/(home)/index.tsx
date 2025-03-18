@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Image,
+    Linking,
     NativeScrollEvent,
     NativeSyntheticEvent,
     RefreshControl,
     ScrollView,
     Text,
+    TouchableOpacity,
     View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
@@ -22,6 +24,7 @@ interface Article {
     description?: string;
     urlToImage?: string;
     source: { name: string };
+    url: string; // Added url property
 }
 
 const HomeScreen = () => {
@@ -87,7 +90,11 @@ const HomeScreen = () => {
 
     const handleLogout = () => {
         logout();
-        router.replace("/(auth)/login_screen");
+        router.replace("/(auth)/login_screen"); // Use replace to prevent going back
+    };
+
+    const handlePress = (url: string) => {
+        Linking.openURL(url);
     };
 
     return (
@@ -218,7 +225,11 @@ const HomeScreen = () => {
                             </Text>
                         ) : (
                             data.slice(0, visibleNews).map((item, index) => (
-                                <View key={index} style={globalStyles.newsItem}>
+                                <TouchableOpacity
+                                    key={index}
+                                    style={globalStyles.newsItem}
+                                    onPress={() => handlePress(item.url)} // Handle press event
+                                >
                                     {item.urlToImage && (
                                         <Image
                                             source={{ uri: item.urlToImage }}
@@ -238,11 +249,21 @@ const HomeScreen = () => {
                                                 "No description available"}
                                         </Text>
                                     </View>
-                                </View>
+                                </TouchableOpacity>
                             ))
                         )}
                     </ScrollView>
                 </View>
+
+                {/* Navigation Button */}
+                <TouchableOpacity
+                    style={globalStyles.button}
+                    onPress={() => router.push("/(auth)/welcome_screen")}
+                >
+                    <Text style={globalStyles.buttonText}>
+                        Go to Welcome Screen
+                    </Text>
+                </TouchableOpacity>
 
                 {/* Logout Button */}
                 <CustomButton

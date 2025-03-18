@@ -1,18 +1,26 @@
 import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
-import { saveFormInput } from "../api/api_service"; // Import the saveFormInput function from API
+import {
+    Modal,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
+import { saveFormInput } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
+import { useAuth } from "../hooks/useAuth"; // Import useAuth to get the user ID
 
 const FormDataScreen: React.FC = () => {
     const router = useRouter();
+    const { user } = useAuth(); // Get the user object from useAuth
 
     const [age, setAge] = useState<string>("");
     const [weight, setWeight] = useState<string>("");
     const [height, setHeight] = useState<string>("");
     const [gender, setGender] = useState<string>("");
-    const [uid, setUid] = useState<string>("YOUR_USER_ID"); // Replace with the actual user ID
 
     const [errors, setErrors] = useState<{
         age?: string;
@@ -20,6 +28,9 @@ const FormDataScreen: React.FC = () => {
         height?: string;
         gender?: string;
     }>({});
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
 
     const handleSubmit = async () => {
         const newErrors: {
@@ -43,28 +54,30 @@ const FormDataScreen: React.FC = () => {
             }, 3000);
         } else {
             try {
-                const response = await saveFormInput(uid, {
+                const response = await saveFormInput(user.uid, {
                     age,
                     weight,
                     height,
                     gender,
                 });
-                if (response.id) {
+                if (response.message === "Data stored successfully") {
                     console.log("Data submitted:", {
                         age,
                         weight,
                         height,
                         gender,
                     });
+                    setModalMessage("Data stored successfully");
+                    setModalVisible(true);
                     router.push("/(home)");
                 } else {
-                    Alert.alert(
-                        "Submission Failed",
-                        response.error || "Unknown error occurred"
-                    );
+                    setModalMessage(response.error || "Unknown error occurred");
+                    setModalVisible(true);
                 }
             } catch (error: any) {
-                Alert.alert("Submission Failed", error.message);
+                console.error("Error submitting form data:", error);
+                setModalMessage(error.response?.data?.details || error.message);
+                setModalVisible(true);
             }
         }
     };
@@ -125,6 +138,28 @@ const FormDataScreen: React.FC = () => {
 
                 <CustomButton title={"PROCESS"} onPress={handleSubmit} />
             </View>
+
+            {/* Modal for displaying messages */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!modalVisible);
+                }}
+            >
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>{modalMessage}</Text>
+                        <Pressable
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalVisible(!modalVisible)}
+                        >
+                            <Text style={styles.textStyle}>Close</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -175,6 +210,44 @@ const styles = StyleSheet.create({
     error: {
         color: "red",
         fontSize: 12,
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+    },
+    buttonClose: {
+        backgroundColor: "#2196F3",
+    },
+    textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center",
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: "center",
     },
 });
 

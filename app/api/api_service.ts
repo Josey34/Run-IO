@@ -34,19 +34,18 @@ export const login = async (email: string, password: string) => {
     }
 };
 
-export const saveFormInput = async (uid: string, formData: any) => {
+export const saveFormInput = async (userId: string, data: object) => {
     try {
-        const response = await axios.post(`${API_URL}/save_form`, {
-            uid,
-            formData,
+        const response = await axios.post(`${API_URL}/store-data`, {
+            userId,
+            data,
         });
-        return response.data; // Make sure this is returning { id: formId }
+        return response.data;
     } catch (error) {
-        handleAxiosError(error);
-        throw error;
+        console.error("Error saving form data to backend:", error);
+        throw new Error("Failed to save form data");
     }
 };
-
 const handleAxiosError = (error: any) => {
     let errorMessage = "An unknown error occurred";
     if (error.response) {
