@@ -1,8 +1,6 @@
-// api_service.js
-
 import axios from "axios";
 
-const API_URL = "http://192.168.40.51:3001/api"; // Ensure this matches your backend URL
+const API_URL = "http://192.168.40.200:3001/api"; // Ensure this matches your backend URL
 
 export const register = async (email: string, password: string) => {
     try {
@@ -17,7 +15,6 @@ export const register = async (email: string, password: string) => {
     }
 };
 
-// api_service.js
 export const login = async (email: string, password: string) => {
     console.log("Making login request to backend with:", email, password); // Debugging line
     try {
@@ -46,6 +43,17 @@ export const saveFormInput = async (userId: string, data: object) => {
         throw new Error("Failed to save form data");
     }
 };
+
+export const fetchChallenges = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/challenges`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching challenges from backend:", error);
+        throw new Error("Failed to fetch challenges");
+    }
+};
+
 const handleAxiosError = (error: any) => {
     let errorMessage = "An unknown error occurred";
     if (error.response) {

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { fetchChallenges } from "../api/api_service"; // Adjust the import path as needed
 
 const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
@@ -46,6 +47,7 @@ const useFetch = <T>(
     const [data, setData] = useState<T[]>([]);
     const [weather, setWeather] = useState<WeatherResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchData = async () => {
@@ -83,7 +85,37 @@ const useFetch = <T>(
         fetchData();
     }, [query, fetchWeather, lat, lon]);
 
-    return { data, weather, loading, error, refetch: fetchData };
+    const fetchFromBackend = async (refresh: boolean = false) => {
+        if (refresh) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+        setError(null);
+
+        try {
+            const challenges = await fetchChallenges();
+            setData(challenges || []);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            if (refresh) {
+                setRefreshing(false);
+            } else {
+                setLoading(false);
+            }
+        }
+    };
+
+    return {
+        data,
+        weather,
+        loading,
+        refreshing,
+        error,
+        refetch: fetchData,
+        fetchFromBackend,
+    };
 };
 
 export default useFetch;

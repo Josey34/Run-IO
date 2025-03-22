@@ -1,6 +1,7 @@
 import { FontAwesome5 } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     StyleSheet,
@@ -8,50 +9,69 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import Animated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from "react-native-reanimated";
+import useFetch from "../hooks/useFetch";
 
-const challengesData = [
-    {
-        id: "1",
-        type: "Running",
-        distance: "11.9 Km",
-        pace: "10 Km/h",
-        duration: "1 Hr",
-        completed: true,
-    },
-    {
-        id: "2",
-        type: "Running",
-        distance: "11.9 Km",
-        pace: "10 Km/h",
-        duration: "1 Hr",
-        completed: false,
-    },
-    {
-        id: "3",
-        type: "Running",
-        distance: "11.9 Km",
-        pace: "10 Km/h",
-        duration: "1 Hr",
-        completed: true,
-    },
-    {
-        id: "4",
-        type: "Running",
-        distance: "11.9 Km",
-        pace: "10 Km/h",
-        duration: "1 Hr",
-        completed: false,
-    },
-];
+interface Challenge {
+    id: number;
+    type: string;
+    distance: number;
+    pace: number;
+    duration: number;
+    completed: boolean;
+}
 
 const ChallengeScreen = () => {
+    const {
+        data: challenges,
+        loading,
+        refreshing,
+        error,
+        refetch,
+        fetchFromBackend,
+    } = useFetch<Challenge>("");
     const [filter, setFilter] = useState("All");
+    const translateX = useSharedValue(0);
 
-    const filteredChallenges = challengesData.filter((challenge) => {
+    useEffect(() => {
+        fetchFromBackend();
+    }, []);
+
+    const filteredChallenges = challenges.filter((challenge) => {
         if (filter === "All") return true;
         return filter === "Completed"
             ? challenge.completed
             : !challenge.completed;
+    });
+
+    useEffect(() => {
+        if (filter === "All") {
+            translateX.value = withTiming(0, {
+                duration: 300,
+                easing: Easing.inOut(Easing.ease),
+            });
+        } else if (filter === "On Going") {
+            translateX.value = withTiming(100, {
+                duration: 300,
+                easing: Easing.inOut(Easing.ease),
+            });
+        } else if (filter === "Completed") {
+            translateX.value = withTiming(200, {
+                duration: 300,
+                easing: Easing.inOut(Easing.ease),
+            });
+        }
+    }, [filter]);
+
+    const animatedStyles = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateX: translateX.value }],
+        };
     });
 
     return (
@@ -77,7 +97,7 @@ const ChallengeScreen = () => {
                         }
                         <Text style={{ color: "#000", fontSize: 18 }}>
                             {" "}
-                            / {challengesData.length}
+                            / {challenges.length}
                         </Text>
                     </Text>
                     <FontAwesome5 name="running" size={28} color="black" />
@@ -86,7 +106,10 @@ const ChallengeScreen = () => {
 
             {/* Filter Buttons */}
             <View style={styles.filterContainer}>
-                {["All", "On Going", "Completed"].map((option) => (
+                <Animated.View
+                    style={[styles.filterIndicator, animatedStyles]}
+                />
+                {["All", "On Going", "Completed"].map((option, index) => (
                     <TouchableOpacity
                         key={option}
                         style={[
@@ -108,58 +131,70 @@ const ChallengeScreen = () => {
             </View>
 
             {/* Challenge List */}
-            <FlatList
-                data={filteredChallenges}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                        <View style={styles.challengeItem}>
-                            <View style={styles.iconContainer}>
-                                <FontAwesome5
-                                    name="running"
-                                    size={20}
-                                    color="#000"
-                                />
+            {loading && !refreshing ? (
+                <ActivityIndicator
+                    size="large"
+                    color="#0000ff"
+                    style={styles.loadingIndicator}
+                />
+            ) : (
+                <FlatList
+                    data={filteredChallenges}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <View
+                            style={{ flexDirection: "row", marginBottom: 20 }}
+                        >
+                            <View style={styles.challengeItem}>
+                                <View style={styles.iconContainer}>
+                                    <FontAwesome5
+                                        name="running"
+                                        size={20}
+                                        color="#000"
+                                    />
+                                </View>
+                                <View style={styles.challengeInfo}>
+                                    <View style={styles.infoTop}>
+                                        <Text style={styles.challengeType}>
+                                            {item.type}
+                                        </Text>
+                                        <Text style={styles.challengeDistance}>
+                                            {item.distance} km
+                                        </Text>
+                                    </View>
+                                    <View style={styles.separator} />
+                                    <View style={styles.infoBottom}>
+                                        <Text style={styles.challengeDetails}>
+                                            Pace: {item.pace} min/km
+                                        </Text>
+                                        <Text style={styles.challengeDetails}>
+                                            Duration: {item.duration} min
+                                        </Text>
+                                    </View>
+                                </View>
                             </View>
-                            <View style={styles.challengeInfo}>
-                                <View style={styles.infoTop}>
-                                    <Text style={styles.challengeType}>
-                                        {item.type}
-                                    </Text>
-                                    <Text style={styles.challengeDistance}>
-                                        {item.distance}
-                                    </Text>
-                                </View>
-                                <View style={styles.separator} />
-                                <View style={styles.infoBottom}>
-                                    <Text style={styles.challengeDetails}>
-                                        Pace: {item.pace}
-                                    </Text>
-                                    <Text style={styles.challengeDetails}>
-                                        Duration: {item.duration}
-                                    </Text>
-                                </View>
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity style={styles.checkButton}>
+                                    <FontAwesome5
+                                        name="check"
+                                        size={18}
+                                        color="black"
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.cancelButton}>
+                                    <FontAwesome5
+                                        name="times"
+                                        size={18}
+                                        color="black"
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity style={styles.checkButton}>
-                                <FontAwesome5
-                                    name="check"
-                                    size={18}
-                                    color="black"
-                                />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.cancelButton}>
-                                <FontAwesome5
-                                    name="times"
-                                    size={18}
-                                    color="black"
-                                />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
-            />
+                    )}
+                    onRefresh={() => fetchFromBackend(true)}
+                    refreshing={refreshing}
+                />
+            )}
         </View>
     );
 };
@@ -167,7 +202,7 @@ const ChallengeScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
+        backgroundColor: "#2C2C2C",
         paddingHorizontal: 20,
         paddingTop: 20,
     },
@@ -175,7 +210,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#222",
+        backgroundColor: "#1A1A1A",
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -213,27 +248,39 @@ const styles = StyleSheet.create({
     },
     filterContainer: {
         flexDirection: "row",
-        justifyContent: "space-around",
-        backgroundColor: "#333",
-        paddingVertical: 10,
-        borderRadius: 10,
-        marginBottom: 10,
+        justifyContent: "space-between",
+        marginVertical: 10,
+        position: "relative",
+    },
+    filterIndicator: {
+        position: "absolute",
+        backgroundColor: "#007bff",
+        height: 40,
+        width: "33%",
+        borderRadius: 20,
+        top: 5,
+        left: 5,
+        padding: 10,
     },
     filterButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: 8,
+        padding: 10,
+        borderRadius: 5,
+        width: "33%",
+        alignItems: "center",
     },
     activeFilter: {
-        backgroundColor: "#fff",
+        backgroundColor: "#ddd",
     },
     filterText: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "bold",
+        color: "#000",
     },
     activeFilterText: {
-        color: "#000",
+        color: "#fff",
+    },
+    challengeListContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
     challengeItem: {
         flexDirection: "row",
@@ -307,6 +354,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 10,
+    },
+    loadingIndicator: {
+        flex: 1,
+    },
+    errorText: {
+        fontSize: 16,
+        color: "red",
     },
 });
 
