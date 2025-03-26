@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://192.168.40.200:3001/api"; // Ensure this matches your backend URL
+const API_URL = "http://192.168.156.184:3001/api"; // Ensure this matches your backend URL
 
 export const register = async (email: string, password: string) => {
     try {

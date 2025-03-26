@@ -1,68 +1,73 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import Tabbar from "@mindinventory/react-native-tab-bar-interaction";
+import { useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 
 export default function HomeLayout() {
+    const router = useRouter();
+
+    const screens = {
+        home: "/(home)/index",
+        statistics: "/(home)/statistics_screen",
+        running: "/(home)/running_screen",
+        challenges: "/(home)/challenge_screen",
+    };
+
+    const tabs = [
+        {
+            name: "Home",
+            activeIcon: <Icon name="home" color="#fff" size={25} />,
+            inactiveIcon: (
+                <Icon name="home-outline" color="#4d4d4d" size={25} />
+            ),
+            screen: screens.home,
+        },
+        {
+            name: "Statistics",
+            activeIcon: <Icon name="stats-chart" color="#fff" size={25} />,
+            inactiveIcon: (
+                <Icon name="stats-chart-outline" color="#4d4d4d" size={25} />
+            ),
+            screen: screens.statistics,
+        },
+        {
+            name: "Running",
+            activeIcon: <Icon name="walk" color="#fff" size={25} />,
+            inactiveIcon: (
+                <Icon name="walk-outline" color="#4d4d4d" size={25} />
+            ),
+            screen: screens.running,
+        },
+        {
+            name: "Challenges",
+            activeIcon: <Icon name="trophy" color="#fff" size={25} />,
+            inactiveIcon: (
+                <Icon name="trophy-outline" color="#4d4d4d" size={25} />
+            ),
+            screen: screens.challenges,
+        },
+    ];
+    console.log("HomeLayout is rendering...");
+
     return (
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-                tabBarActiveTintColor: "#007AFF",
-                tabBarInactiveTintColor: "#8e8e93",
-                tabBarStyle: { backgroundColor: "#fff", height: 60 },
-            }}
-        >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: "Home",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons
-                            name="home-outline"
-                            size={size}
-                            color={color}
-                        />
-                    ),
-                }}
+        <View style={styles.container}>
+            <Tabbar
+                tabs={tabs}
+                containerWidth={350}
+                onTabChange={(tab, index) =>
+                    router.push(tabs[index].screen as any)
+                }
             />
-            <Tabs.Screen
-                name="statistics_screen"
-                options={{
-                    title: "Statistics",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons
-                            name="stats-chart-outline"
-                            size={size}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="running_screen"
-                options={{
-                    title: "Running",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons
-                            name="walk-outline"
-                            size={size}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="challenge_screen"
-                options={{
-                    title: "Challenges",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons
-                            name="trophy-outline"
-                            size={size}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-        </Tabs>
+        </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#fff",
+    },
+});
