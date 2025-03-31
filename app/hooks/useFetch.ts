@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { fetchChallenges } from "../api/api_service"; // Adjust the import path as needed
+import { fetchChallenges, updateChallengeStatus } from "../api/api_service"; // Adjust the import path as needed
 
 const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
@@ -49,6 +49,7 @@ const useFetch = <T>(
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [updatingId, setUpdatingId] = useState<number | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -81,10 +82,6 @@ const useFetch = <T>(
         }
     };
 
-    useEffect(() => {
-        fetchData();
-    }, [query, fetchWeather, lat, lon]);
-
     const fetchFromBackend = async (refresh: boolean = false) => {
         if (refresh) {
             setRefreshing(true);
@@ -107,6 +104,29 @@ const useFetch = <T>(
         }
     };
 
+    const updateChallenge = async (
+        challengeId: number,
+        completed: boolean
+    ): Promise<boolean> => {
+        setUpdatingId(challengeId);
+        setError(null);
+
+        try {
+            await updateChallengeStatus(challengeId, completed);
+            await fetchFromBackend(true); // Refresh data after update
+            return true;
+        } catch (err: any) {
+            setError(err.message);
+            return false;
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [query, fetchWeather, lat, lon]);
+
     return {
         data,
         weather,
@@ -115,6 +135,7 @@ const useFetch = <T>(
         error,
         refetch: fetchData,
         fetchFromBackend,
+        updateChallenge,
     };
 };
 

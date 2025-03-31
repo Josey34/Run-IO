@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import CustomModal from "../components/CustomModal";
 import useFetch from "../hooks/useFetch";
 
 interface Challenge {
@@ -30,12 +31,20 @@ const ChallengeScreen = () => {
         error,
         refetch,
         fetchFromBackend,
+        updateChallenge,
     } = useFetch<Challenge>("");
 
     const [filter, setFilter] = useState("All");
     const translateX = useRef(new Animated.Value(0)).current;
+    const [updatingChallengeId, setUpdatingChallengeId] = useState<
+        number | null
+    >(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
+    const [pendingAction, setPendingAction] = useState<(() => void) | null>(
+        null
+    );
 
-    // Definisikan array filter
     const filters = ["All", "On Going", "Completed"];
 
     useEffect(() => {
@@ -52,12 +61,54 @@ const ChallengeScreen = () => {
     useEffect(() => {
         const index = filters.indexOf(filter);
         Animated.timing(translateX, {
-            toValue: index * 100, // Setiap tab memiliki lebar 100
+            toValue: index * 100,
             duration: 300,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
         }).start();
     }, [filter]);
+
+    const showModal = (message: string, confirmAction?: () => void) => {
+        setModalMessage(message);
+        setPendingAction(() => confirmAction || null);
+        setModalVisible(true);
+    };
+
+    const handleUpdateChallenge = async (
+        challengeId: number,
+        completed: boolean
+    ) => {
+        try {
+            const success = await updateChallenge(challengeId, completed);
+            if (success) {
+                showModal(
+                    `Challenge ${
+                        completed ? "completed" : "cancelled"
+                    } successfully!`
+                );
+            } else {
+                showModal(
+                    "Failed to update challenge status. Please try again."
+                );
+            }
+        } catch (error) {
+            showModal("Failed to update challenge status. Please try again.");
+            console.error("Error updating challenge:", error);
+        }
+    };
+
+    const handleComplete = (challengeId: number) => {
+        showModal(
+            "Are you sure you want to mark this challenge as completed?",
+            () => handleUpdateChallenge(challengeId, true)
+        );
+    };
+
+    const handleCancel = (challengeId: number) => {
+        showModal("Are you sure you want to cancel this challenge?", () =>
+            handleUpdateChallenge(challengeId, false)
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -70,28 +121,31 @@ const ChallengeScreen = () => {
                 />
             </View>
 
-            {/* Progress Box */}
+            {/* Progress Box with Loading State */}
             <View style={styles.progressBox}>
                 <Text style={styles.progressTitle}>Completed Challenges</Text>
                 <View style={styles.progressContent}>
-                    <Text style={styles.progressText}>
-                        {
-                            filteredChallenges.filter(
-                                (challenge) => challenge.completed
-                            ).length
-                        }
-                        <Text style={{ color: "#000", fontSize: 18 }}>
-                            {" "}
-                            / {challenges.length}
+                    {loading ? (
+                        <ActivityIndicator size="small" color="#007bff" />
+                    ) : (
+                        <Text style={styles.progressText}>
+                            {
+                                challenges.filter(
+                                    (challenge) => challenge.completed
+                                ).length
+                            }
+                            <Text style={{ color: "#000", fontSize: 18 }}>
+                                {" "}
+                                / {challenges.length}
+                            </Text>
                         </Text>
-                    </Text>
+                    )}
                     <Ionicons name="fitness" size={28} color="black" />
                 </View>
             </View>
 
-            {/* Filter Buttons with Animated Indicator */}
+            {/* Filter Buttons with Loading State */}
             <View style={styles.filterContainer}>
-                {/* Animated Sliding Indicator */}
                 <Animated.View
                     style={[
                         styles.filterIndicator,
@@ -103,11 +157,13 @@ const ChallengeScreen = () => {
                         key={option}
                         style={styles.filterButton}
                         onPress={() => setFilter(option)}
+                        disabled={loading} // Disable during loading
                     >
                         <Text
                             style={[
                                 styles.filterText,
                                 filter === option && styles.activeFilterText,
+                                loading && styles.disabledText, // Add disabled style
                             ]}
                         >
                             {option}
@@ -160,19 +216,49 @@ const ChallengeScreen = () => {
                                 </View>
                             </View>
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.checkButton}>
-                                    <Ionicons
-                                        name="checkmark"
-                                        size={18}
-                                        color="#fff"
-                                    />
+                                <TouchableOpacity
+                                    style={[
+                                        styles.checkButton,
+                                        updatingChallengeId === item.id &&
+                                            styles.buttonDisabled,
+                                    ]}
+                                    onPress={() => handleComplete(item.id)}
+                                    disabled={updatingChallengeId === item.id}
+                                >
+                                    {updatingChallengeId === item.id ? (
+                                        <ActivityIndicator
+                                            size="small"
+                                            color="#fff"
+                                        />
+                                    ) : (
+                                        <Ionicons
+                                            name="checkmark"
+                                            size={18}
+                                            color="#fff"
+                                        />
+                                    )}
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.cancelButton}>
-                                    <Ionicons
-                                        name="close"
-                                        size={18}
-                                        color="#fff"
-                                    />
+                                <TouchableOpacity
+                                    style={[
+                                        styles.cancelButton,
+                                        updatingChallengeId === item.id &&
+                                            styles.buttonDisabled,
+                                    ]}
+                                    onPress={() => handleCancel(item.id)}
+                                    disabled={updatingChallengeId === item.id}
+                                >
+                                    {updatingChallengeId === item.id ? (
+                                        <ActivityIndicator
+                                            size="small"
+                                            color="#fff"
+                                        />
+                                    ) : (
+                                        <Ionicons
+                                            name="close"
+                                            size={18}
+                                            color="#fff"
+                                        />
+                                    )}
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -181,6 +267,15 @@ const ChallengeScreen = () => {
                     refreshing={refreshing}
                 />
             )}
+            <CustomModal
+                visible={modalVisible}
+                message={modalMessage}
+                onConfirm={() => {
+                    pendingAction?.();
+                    setModalVisible(false);
+                }}
+                onClose={() => setModalVisible(false)}
+            />
         </View>
     );
 };
@@ -352,6 +447,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 10,
+    },
+    buttonDisabled: {
+        opacity: 0.5,
+    },
+    disabledText: {
+        opacity: 0.5,
     },
     loadingIndicator: {
         flex: 1,

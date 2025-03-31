@@ -54,6 +54,23 @@ export const fetchChallenges = async () => {
     }
 };
 
+export const updateChallengeStatus = async (
+    challengeId: number,
+    completed: boolean
+) => {
+    try {
+        const response = await axios.put(`${API_URL}/challenges/status`, {
+            challengeId,
+            completed,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating challenge status:", error);
+        handleAxiosError(error);
+        throw error;
+    }
+};
+
 const handleAxiosError = (error: any) => {
     let errorMessage = "An unknown error occurred";
     if (error.response) {
