@@ -1,73 +1,180 @@
-import Tabbar from "@mindinventory/react-native-tab-bar-interaction";
-import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, View } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { useRef, useState } from "react";
+import {
+    Animated,
+    Dimensions,
+    Pressable,
+    StyleSheet,
+    View,
+} from "react-native";
+
+const { width } = Dimensions.get("window");
+const TAB_WIDTH = (width - 48) / 4; // 48 is the total horizontal padding (24 * 2)
 
 export default function HomeLayout() {
-    const router = useRouter();
+    const [activeIndex, setActiveIndex] = useState(0);
+    const translateX = useRef(new Animated.Value(0)).current;
+    const scaleValues = useRef([
+        new Animated.Value(1),
+        new Animated.Value(1),
+        new Animated.Value(1),
+        new Animated.Value(1),
+    ]).current;
 
-    const screens = {
-        home: "/(home)/index",
-        statistics: "/(home)/statistics_screen",
-        running: "/(home)/running_screen",
-        challenges: "/(home)/challenge_screen",
+    const animateTab = (index: number) => {
+        // Animate the sliding indicator
+        Animated.spring(translateX, {
+            toValue: index * TAB_WIDTH, // Pindahkan slider per tab dengan presisi
+            useNativeDriver: true,
+        }).start();
+
+        // Animate icon scaling
+        scaleValues.forEach((scale, i) => {
+            Animated.spring(scale, {
+                toValue: i === index ? 1.2 : 1,
+                useNativeDriver: true,
+                speed: 12,
+                bounciness: 8,
+            }).start();
+        });
+
+        setActiveIndex(index);
     };
 
-    const tabs = [
-        {
-            name: "Home",
-            activeIcon: <Icon name="home" color="#fff" size={25} />,
-            inactiveIcon: (
-                <Icon name="home-outline" color="#4d4d4d" size={25} />
-            ),
-            screen: screens.home,
-        },
-        {
-            name: "Statistics",
-            activeIcon: <Icon name="stats-chart" color="#fff" size={25} />,
-            inactiveIcon: (
-                <Icon name="stats-chart-outline" color="#4d4d4d" size={25} />
-            ),
-            screen: screens.statistics,
-        },
-        {
-            name: "Running",
-            activeIcon: <Icon name="walk" color="#fff" size={25} />,
-            inactiveIcon: (
-                <Icon name="walk-outline" color="#4d4d4d" size={25} />
-            ),
-            screen: screens.running,
-        },
-        {
-            name: "Challenges",
-            activeIcon: <Icon name="trophy" color="#fff" size={25} />,
-            inactiveIcon: (
-                <Icon name="trophy-outline" color="#4d4d4d" size={25} />
-            ),
-            screen: screens.challenges,
-        },
-    ];
-    console.log("HomeLayout is rendering...");
-
     return (
-        <View style={styles.container}>
-            <Tabbar
-                tabs={tabs}
-                containerWidth={350}
-                onTabChange={(tab, index) =>
-                    router.push(tabs[index].screen as any)
-                }
-            />
-        </View>
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarStyle: styles.tabBar,
+                tabBarShowLabel: false,
+            }}
+            tabBar={({ navigation, state, descriptors }) => (
+                <View style={styles.tabBarContainer}>
+                    {/* Sliding Indicator */}
+                    <Animated.View
+                        style={[
+                            styles.slider,
+                            {
+                                transform: [{ translateX }],
+                            },
+                        ]}
+                    />
+
+                    {/* Tab Buttons */}
+                    {state.routes.map((route, index) => {
+                        const isFocused = state.index === index;
+
+                        return (
+                            <Pressable
+                                key={route.key}
+                                style={styles.tabButton}
+                                onPress={() => {
+                                    const event = navigation.emit({
+                                        type: "tabPress",
+                                        target: route.key,
+                                        canPreventDefault: true,
+                                    });
+
+                                    if (!isFocused && !event.defaultPrevented) {
+                                        navigation.navigate(route.name);
+                                        animateTab(index);
+                                    }
+                                }}
+                            >
+                                <Animated.View
+                                    style={[
+                                        styles.iconContainer,
+                                        {
+                                            transform: [
+                                                { scale: scaleValues[index] },
+                                            ],
+                                        },
+                                    ]}
+                                >
+                                    <Ionicons
+                                        name={getIconName(
+                                            route.name as
+                                                | "index"
+                                                | "statistics_screen"
+                                                | "running_screen"
+                                                | "challenge_screen",
+                                            isFocused
+                                        )}
+                                        size={24}
+                                        color={
+                                            isFocused ? "#FFFFFF" : "#666666"
+                                        }
+                                    />
+                                </Animated.View>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+            )}
+        >
+            <Tabs.Screen name="index" />
+            <Tabs.Screen name="statistics_screen" />
+            <Tabs.Screen name="running_screen" />
+            <Tabs.Screen name="challenge_screen" />
+        </Tabs>
     );
 }
 
+const getIconName = (routeName: string, isFocused: boolean): string => {
+    const icons: { [key: string]: string } = {
+        index: isFocused ? "home-sharp" : "home-outline",
+        statistics_screen: isFocused ? "stats-chart" : "stats-chart-outline",
+        running_screen: isFocused ? "fitness" : "fitness-outline",
+        challenge_screen: isFocused ? "trophy" : "trophy-outline",
+    };
+    return icons[routeName];
+};
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
+    tabBarContainer: {
+        flexDirection: "row",
+        position: "absolute",
+        bottom: 24,
+        left: 14,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#fff",
+        height: 65,
+        backgroundColor: "#F3F4F6",
+        borderRadius: 20,
+        padding: 10,
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+    },
+    tabBar: {
+        display: "none",
+    },
+    slider: {
+        position: "absolute",
+        width: TAB_WIDTH - 20,
+        height: 45,
+        backgroundColor: "#007AFF",
+        borderRadius: 15,
+        top: 10,
+        left: 20,
+    },
+
+    tabButton: {
+        width: TAB_WIDTH,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    iconContainer: {
+        width: 45,
+        height: 45,
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1,
     },
 });

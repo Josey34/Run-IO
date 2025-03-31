@@ -1,6 +1,9 @@
-import { FontAwesome5 } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import {
+    ActivityIndicator,
+    Animated,
+    Easing,
     FlatList,
     Image,
     StyleSheet,
@@ -8,7 +11,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { SceneMap, TabView } from "react-native-tab-view"; // Import TabView and SceneMap
 import useFetch from "../hooks/useFetch";
 
 interface Challenge {
@@ -29,192 +31,33 @@ const ChallengeScreen = () => {
         refetch,
         fetchFromBackend,
     } = useFetch<Challenge>("");
-    const [index, setIndex] = useState(0); // To manage selected tab index
-    const [routes] = useState([
-        { key: "all", title: "All" },
-        { key: "ongoing", title: "On Going" },
-        { key: "completed", title: "Completed" },
-    ]);
+
+    const [filter, setFilter] = useState("All");
+    const translateX = useRef(new Animated.Value(0)).current;
+
+    // Definisikan array filter
+    const filters = ["All", "On Going", "Completed"];
 
     useEffect(() => {
         fetchFromBackend();
     }, []);
 
     const filteredChallenges = challenges.filter((challenge) => {
-        if (index === 0) return true;
-        return index === 1 ? !challenge.completed : challenge.completed;
+        if (filter === "All") return true;
+        return filter === "Completed"
+            ? challenge.completed
+            : !challenge.completed;
     });
 
-    const FirstRoute = () => (
-        <FlatList
-            data={filteredChallenges}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-                <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                    <View style={styles.challengeItem}>
-                        <View style={styles.iconContainer}>
-                            <FontAwesome5
-                                name="running"
-                                size={20}
-                                color="#FFF"
-                            />
-                        </View>
-                        <View style={styles.challengeInfo}>
-                            <View style={styles.infoTop}>
-                                <Text style={styles.challengeType}>
-                                    {item.type}
-                                </Text>
-                                <Text style={styles.challengeDistance}>
-                                    {item.distance} km
-                                </Text>
-                            </View>
-                            <View style={styles.separator} />
-                            <View style={styles.infoBottom}>
-                                <Text style={styles.challengeDetails}>
-                                    Pace: {item.pace} min/km
-                                </Text>
-                                <Text style={styles.challengeDetails}>
-                                    Duration: {item.duration} min
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={styles.actionButtons}>
-                        <TouchableOpacity style={styles.checkButton}>
-                            <FontAwesome5
-                                name="check"
-                                size={18}
-                                color="black"
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.cancelButton}>
-                            <FontAwesome5
-                                name="times"
-                                size={18}
-                                color="black"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            )}
-            onRefresh={() => fetchFromBackend(true)}
-            refreshing={refreshing}
-        />
-    );
-
-    const SecondRoute = () => (
-        <FlatList
-            data={filteredChallenges}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-                <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                    <View style={styles.challengeItem}>
-                        <View style={styles.iconContainer}>
-                            <FontAwesome5
-                                name="running"
-                                size={20}
-                                color="#FFF"
-                            />
-                        </View>
-                        <View style={styles.challengeInfo}>
-                            <View style={styles.infoTop}>
-                                <Text style={styles.challengeType}>
-                                    {item.type}
-                                </Text>
-                                <Text style={styles.challengeDistance}>
-                                    {item.distance} km
-                                </Text>
-                            </View>
-                            <View style={styles.separator} />
-                            <View style={styles.infoBottom}>
-                                <Text style={styles.challengeDetails}>
-                                    Pace: {item.pace} min/km
-                                </Text>
-                                <Text style={styles.challengeDetails}>
-                                    Duration: {item.duration} min
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={styles.actionButtons}>
-                        <TouchableOpacity style={styles.checkButton}>
-                            <FontAwesome5
-                                name="check"
-                                size={18}
-                                color="black"
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.cancelButton}>
-                            <FontAwesome5
-                                name="times"
-                                size={18}
-                                color="black"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            )}
-            onRefresh={() => fetchFromBackend(true)}
-            refreshing={refreshing}
-        />
-    );
-
-    const ThirdRoute = () => (
-        <FlatList
-            data={filteredChallenges}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-                <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                    <View style={styles.challengeItem}>
-                        <View style={styles.iconContainer}>
-                            <FontAwesome5
-                                name="running"
-                                size={20}
-                                color="#FFF"
-                            />
-                        </View>
-                        <View style={styles.challengeInfo}>
-                            <View style={styles.infoTop}>
-                                <Text style={styles.challengeType}>
-                                    {item.type}
-                                </Text>
-                                <Text style={styles.challengeDistance}>
-                                    {item.distance} km
-                                </Text>
-                            </View>
-                            <View style={styles.separator} />
-                            <View style={styles.infoBottom}>
-                                <Text style={styles.challengeDetails}>
-                                    Pace: {item.pace} min/km
-                                </Text>
-                                <Text style={styles.challengeDetails}>
-                                    Duration: {item.duration} min
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={styles.actionButtons}>
-                        <TouchableOpacity style={styles.checkButton}>
-                            <FontAwesome5
-                                name="check"
-                                size={18}
-                                color="black"
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.cancelButton}>
-                            <FontAwesome5
-                                name="times"
-                                size={18}
-                                color="black"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            )}
-            onRefresh={() => fetchFromBackend(true)}
-            refreshing={refreshing}
-        />
-    );
+    useEffect(() => {
+        const index = filters.indexOf(filter);
+        Animated.timing(translateX, {
+            toValue: index * 100, // Setiap tab memiliki lebar 100
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+        }).start();
+    }, [filter]);
 
     return (
         <View style={styles.container}>
@@ -242,21 +85,102 @@ const ChallengeScreen = () => {
                             / {challenges.length}
                         </Text>
                     </Text>
-                    <FontAwesome5 name="running" size={28} color="black" />
+                    <Ionicons name="fitness" size={28} color="black" />
                 </View>
             </View>
 
-            {/* Tab View for Filter Buttons */}
-            <TabView
-                navigationState={{ index, routes }}
-                renderScene={SceneMap({
-                    all: FirstRoute,
-                    ongoing: SecondRoute,
-                    completed: ThirdRoute,
-                })}
-                onIndexChange={setIndex}
-                initialLayout={{ width: 300 }}
-            />
+            {/* Filter Buttons with Animated Indicator */}
+            <View style={styles.filterContainer}>
+                {/* Animated Sliding Indicator */}
+                <Animated.View
+                    style={[
+                        styles.filterIndicator,
+                        { transform: [{ translateX }] },
+                    ]}
+                />
+                {filters.map((option) => (
+                    <TouchableOpacity
+                        key={option}
+                        style={styles.filterButton}
+                        onPress={() => setFilter(option)}
+                    >
+                        <Text
+                            style={[
+                                styles.filterText,
+                                filter === option && styles.activeFilterText,
+                            ]}
+                        >
+                            {option}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {/* Challenge List */}
+            {loading && !refreshing ? (
+                <ActivityIndicator
+                    size="large"
+                    color="#007bff"
+                    style={styles.loadingIndicator}
+                />
+            ) : (
+                <FlatList
+                    data={filteredChallenges}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <View
+                            style={{ flexDirection: "row", marginBottom: 20 }}
+                        >
+                            <View style={styles.challengeItem}>
+                                <View style={styles.iconContainer}>
+                                    <Ionicons
+                                        name="fitness"
+                                        size={20}
+                                        color="#fff"
+                                    />
+                                </View>
+                                <View style={styles.challengeInfo}>
+                                    <View style={styles.infoTop}>
+                                        <Text style={styles.challengeType}>
+                                            {item.type}
+                                        </Text>
+                                        <Text style={styles.challengeDistance}>
+                                            {item.distance} km
+                                        </Text>
+                                    </View>
+                                    <View style={styles.separator} />
+                                    <View style={styles.infoBottom}>
+                                        <Text style={styles.challengeDetails}>
+                                            Pace: {item.pace} min/km
+                                        </Text>
+                                        <Text style={styles.challengeDetails}>
+                                            Duration: {item.duration} min
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity style={styles.checkButton}>
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={18}
+                                        color="#fff"
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.cancelButton}>
+                                    <Ionicons
+                                        name="close"
+                                        size={18}
+                                        color="#fff"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+                    onRefresh={() => fetchFromBackend(true)}
+                    refreshing={refreshing}
+                />
+            )}
         </View>
     );
 };
@@ -264,7 +188,7 @@ const ChallengeScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#1A1A1A", // Dark background
+        backgroundColor: "#1A1A1A",
         paddingHorizontal: 20,
         paddingTop: 20,
     },
@@ -313,6 +237,44 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#000",
     },
+    filterContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-around",
+        backgroundColor: "#333",
+        borderRadius: 25,
+        width: 300,
+        height: 50,
+        alignSelf: "center",
+        position: "relative",
+        overflow: "hidden",
+    },
+    filterIndicator: {
+        position: "absolute",
+        backgroundColor: "#007bff",
+        height: 40,
+        width: 100,
+        borderRadius: 20,
+        top: 5,
+        left: 0,
+    },
+    filterButton: {
+        flex: 1,
+        height: 50,
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1,
+    },
+    filterText: {
+        color: "#888",
+        fontSize: 14,
+        fontWeight: "600",
+        textAlign: "center",
+    },
+    activeFilterText: {
+        color: "#fff",
+        fontWeight: "700",
+    },
     challengeItem: {
         flexDirection: "row",
         alignItems: "center",
@@ -329,7 +291,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     iconContainer: {
-        backgroundColor: "#007bff", // Icon background color
+        backgroundColor: "#007bff",
         width: 40,
         height: 40,
         borderRadius: 20,
@@ -374,7 +336,7 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
     checkButton: {
-        backgroundColor: "#007bff",
+        backgroundColor: "#4CAF50",
         width: 30,
         height: 30,
         borderRadius: 15,

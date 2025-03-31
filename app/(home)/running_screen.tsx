@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     statText: { color: "white", fontSize: 16 },
     fab: {
         position: "absolute",
-        bottom: 20,
+        bottom: 120,
         right: 20,
         backgroundColor: "blue",
         padding: 15,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     },
     calibrateFab: {
         position: "absolute",
-        bottom: 20,
+        bottom: 120,
         left: 20,
         backgroundColor: "green",
         padding: 15,
