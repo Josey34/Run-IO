@@ -21,6 +21,10 @@ export const login = async (email: string, password: string) => {
             email,
             password,
         });
+        console.log(email, password);
+        console.log("====================================");
+        console.log(response.data);
+        console.log("====================================");
         return response.data;
     } catch (error) {
         console.error("Error during login request:", error);
@@ -72,21 +76,14 @@ export const updateChallengeStatus = async (
 export const saveRunData = async (
     userId: string,
     runData: {
-        // Timestamps
         startTime: string;
         endTime: string;
         timeElapsed: string;
-
-        // Distance and Speed
         distance: number;
         currentSpeed: number;
         averageSpeed: number;
-
-        // Pace
         currentPace: string;
         averagePace: string;
-
-        // Steps and Route
         steps: number;
         route: Array<{
             latitude: number;
@@ -105,6 +102,17 @@ export const saveRunData = async (
         console.error("Error saving run data to backend:", error);
         handleAxiosError(error);
         throw new Error("Failed to save run data");
+    }
+};
+
+export const fetchUserRuns = async (userId: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/runs/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching user runs:", error);
+        handleAxiosError(error);
+        throw new Error("Failed to fetch run data");
     }
 };
 

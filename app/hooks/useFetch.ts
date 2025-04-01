@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import {
     fetchChallenges,
+    fetchUserRuns,
     saveRunData,
     updateChallengeStatus,
 } from "../api/api_service"; // Adjust the import path as needed
@@ -158,6 +159,27 @@ const useFetch = <T>(
         }
     };
 
+    const fetchRun = async (userId: string) => {
+        if (!userId) return [];
+
+        try {
+            const response = await fetchUserRuns(userId);
+
+            if (Array.isArray(response)) {
+                return response;
+            }
+
+            if (response?.data && Array.isArray(response.data)) {
+                return response.data;
+            }
+
+            return [];
+        } catch (error) {
+            console.error("Error fetching runs:", error);
+            throw new Error("Failed to fetch runs");
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [query, fetchWeather, lat, lon]);
@@ -173,6 +195,7 @@ const useFetch = <T>(
         updateChallenge,
         saveRun,
         saving,
+        fetchRun,
     };
 };
 
