@@ -1,13 +1,15 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { fetchChallenges, updateChallengeStatus } from "../api/api_service"; // Adjust the import path as needed
+import {
+    fetchChallenges,
+    saveRunData,
+    updateChallengeStatus,
+} from "../api/api_service"; // Adjust the import path as needed
 
 const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
 const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
 const BASE_URL_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_URL}`;
-
-console.log(API_KEY_NEWS, BASE_URL_NEWS, API_KEY_WEATHER, BASE_URL_WEATHER);
 
 interface Article {
     title: string;
@@ -38,6 +40,24 @@ interface WeatherResponse {
     location: LocationData;
 }
 
+interface RunData {
+    id?: string;
+    startTime: string;
+    endTime: string;
+    timeElapsed: string;
+    distance: number;
+    currentSpeed: number;
+    averageSpeed: number;
+    currentPace: string;
+    averagePace: string;
+    steps: number;
+    route: Array<{
+        latitude: number;
+        longitude: number;
+        timestamp: string;
+    }>;
+}
+
 const useFetch = <T>(
     query: string,
     fetchWeather: boolean = false,
@@ -50,6 +70,7 @@ const useFetch = <T>(
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [updatingId, setUpdatingId] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -123,6 +144,20 @@ const useFetch = <T>(
         }
     };
 
+    const saveRun = async (userId: string, runData: RunData) => {
+        setSaving(true);
+        setError(null);
+        try {
+            const savedRun = await saveRunData(userId, runData);
+            return savedRun;
+        } catch (err: any) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setSaving(false);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [query, fetchWeather, lat, lon]);
@@ -136,6 +171,8 @@ const useFetch = <T>(
         refetch: fetchData,
         fetchFromBackend,
         updateChallenge,
+        saveRun,
+        saving,
     };
 };
 

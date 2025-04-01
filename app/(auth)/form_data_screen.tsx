@@ -61,12 +61,6 @@ const FormDataScreen: React.FC = () => {
                     gender,
                 });
                 if (response.message === "Data stored successfully") {
-                    console.log("Data submitted:", {
-                        age,
-                        weight,
-                        height,
-                        gender,
-                    });
                     setModalMessage("Data stored successfully");
                     setModalVisible(true);
                     router.push("/(home)");

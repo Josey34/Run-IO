@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "infoPlist": {
+        "NSMotionUsageDescription": "Allow Run-IO to access your motion data to track your steps while running.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,8 +23,10 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
+        "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_BACKGROUND_LOCATION",
+        "ACTIVITY_RECOGNITION"
       ]
     },
     "web": {
@@ -35,6 +43,15 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Run-IO to use your location to track your running activity.",
+          "locationWhenInUsePermission": "Allow Run-IO to use your location to track your running activity.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
         }
       ]
     ],
