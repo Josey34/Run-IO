@@ -9,7 +9,17 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:development": "eas build --profile development --platform android",
+    "build:preview": "eas build --profile preview --platform android",
+    "build:production": "eas build --profile production --platform android",
+    "build:local": "expo build:android -t apk",
+    "eas:configure": "eas build:configure",
+    "eas:login": "eas login",
+    "submit:android": "eas submit -p android",
+    "update": "eas update --auto",
+    "update:preview": "eas update --branch preview --message \"Update preview build\"",
+    "update:production": "eas update --branch production --message \"Update production build\""
   },
   "jest": {
     "preset": "jest-expo"
@@ -53,7 +63,8 @@
     "react-native-webview": "13.12.5",
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
-    "tailwindcss-react-native": "^1.7.10"
+    "tailwindcss-react-native": "^1.7.10",
+    "expo-dev-client": "~5.0.16"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
