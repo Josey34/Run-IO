@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -66,6 +67,7 @@ const StatisticsScreen = () => {
     const { user } = useAuth();
     const { loading, error, fetchRun } = useFetch<Run[]>("");
     const [refreshing, setRefreshing] = useState(false);
+    const router = useRouter();
 
     const loadRuns = async () => {
         if (!user?.uid) return;
@@ -86,6 +88,11 @@ const StatisticsScreen = () => {
     };
 
     const onRefresh = async () => {
+        if (!user?.uid) {
+            ErrorModalEmitter.emit("SHOW_ERROR", "Please log in");
+            router.replace("/(auth)/login_screen"); // Redirect to login if user is not authenticated
+            return;
+        }
         setRefreshing(true);
         await loadRuns();
         setRefreshing(false);

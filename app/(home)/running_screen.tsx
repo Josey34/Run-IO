@@ -1,6 +1,7 @@
 import { mapStyle } from "@/constants/Map";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import { useRouter } from "expo-router";
 import { Pedometer } from "expo-sensors";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -122,6 +123,8 @@ const RunningScreen = () => {
     const lastLocationRef = useRef<Location.LocationObjectCoords | null>(null);
     const lastUpdateTimeRef = useRef<number | null>(null);
     const speedReadings = useRef<number[]>([]);
+
+    const router = useRouter();
 
     const updateWorkoutStats = (
         newLocation: Location.LocationObjectCoords,
@@ -370,6 +373,11 @@ const RunningScreen = () => {
     };
 
     useEffect(() => {
+        if (!user?.uid) {
+            ErrorModalEmitter.emit("SHOW_ERROR", "Please log in");
+            router.replace("/(auth)/login_screen"); // Redirect to login if user is not authenticated
+            return;
+        }
         return () => {
             locationSubscription.current?.remove();
             pedometerSubscription.current?.remove();

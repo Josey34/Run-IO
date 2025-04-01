@@ -24,12 +24,17 @@ interface Article {
     description?: string;
     urlToImage?: string;
     source: { name: string };
-    url: string; // Added url property
+    url: string;
+}
+
+interface Run {
+    distance: number;
+    createdAt: string;
 }
 
 const HomeScreen = () => {
     const router = useRouter();
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const [latitude, setLatitude] = useState<number | undefined>(0);
     const [longitude, setLongitude] = useState<number | undefined>(0);
     const [locationError, setLocationError] = useState<string | null>(null);
@@ -41,8 +46,15 @@ const HomeScreen = () => {
     );
     const [visibleNews, setVisibleNews] = useState(2);
     const [refreshing, setRefreshing] = useState(false);
+    const { fetchRun } = useFetch<Run[]>("");
+    const [todayDistance, setTodayDistance] = useState(0);
 
     useEffect(() => {
+        if (!user?.uid) {
+            router.replace("/(auth)/login_screen");
+            return;
+        }
+
         const getLocation = async () => {
             try {
                 const { status } =
@@ -61,9 +73,36 @@ const HomeScreen = () => {
                 setLocationError("Unable to retrieve location.");
             }
         };
-
+        loadTodayRuns();
         getLocation();
     }, []);
+
+    const loadTodayRuns = async () => {
+        if (!user?.uid) return;
+
+        try {
+            const runs = await fetchRun(user.uid);
+            if (runs && Array.isArray(runs)) {
+                const today = new Date().toISOString().split("T")[0];
+
+                const todayRuns = runs.filter((run) => {
+                    const runDate = new Date(run.createdAt)
+                        .toISOString()
+                        .split("T")[0];
+                    return runDate === today;
+                });
+
+                const totalDistance = todayRuns.reduce(
+                    (sum, run) => sum + (run.distance || 0),
+                    0
+                );
+
+                setTodayDistance(Number(totalDistance.toFixed(2)));
+            }
+        } catch (error) {
+            console.error("Error loading today's runs:", error);
+        }
+    };
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const { layoutMeasurement, contentOffset, contentSize } =
@@ -80,6 +119,27 @@ const HomeScreen = () => {
     const onRefresh = async () => {
         setRefreshing(true);
         await refetch();
+        if (user?.uid) {
+            try {
+                const runs = await fetchRun(user.uid);
+                if (runs && Array.isArray(runs)) {
+                    const today = new Date().toISOString().split("T")[0];
+                    const todayRuns = runs.filter((run) => {
+                        const runDate = new Date(run.createdAt)
+                            .toISOString()
+                            .split("T")[0];
+                        return runDate === today;
+                    });
+                    const totalDistance = todayRuns.reduce(
+                        (sum, run) => sum + (run.distance || 0),
+                        0
+                    );
+                    setTodayDistance(Number(totalDistance.toFixed(2)));
+                }
+            } catch (error) {
+                console.error("Error refreshing today's runs:", error);
+            }
+        }
         setRefreshing(false);
     };
 
@@ -90,7 +150,7 @@ const HomeScreen = () => {
 
     const handleLogout = () => {
         logout();
-        router.replace("/(auth)/login_screen"); // Use replace to prevent going back
+        router.replace("/(auth)/login_screen");
     };
 
     const handlePress = (url: string) => {
@@ -129,7 +189,9 @@ const HomeScreen = () => {
                 <View style={globalStyles.runContainer}>
                     <View>
                         <Text style={globalStyles.runTitle}>Today's Run</Text>
-                        <Text style={globalStyles.runDistance}>0 Km</Text>
+                        <Text style={globalStyles.runDistance}>
+                            {todayDistance} Km{" "}
+                        </Text>
                     </View>
                     {latitude && longitude ? (
                         <View style={globalStyles.mapContainer}>

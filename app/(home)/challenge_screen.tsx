@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -11,7 +12,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { ErrorModalEmitter } from "../api/api_service";
 import CustomModal from "../components/CustomModal";
+import { useAuth } from "../hooks/useAuth";
 import useFetch from "../hooks/useFetch";
 
 interface Challenge {
@@ -24,6 +27,8 @@ interface Challenge {
 }
 
 const ChallengeScreen = () => {
+    const { user } = useAuth();
+    const router = useRouter();
     const {
         data: challenges,
         loading,
@@ -59,6 +64,11 @@ const ChallengeScreen = () => {
     });
 
     useEffect(() => {
+        if (!user?.uid) {
+            ErrorModalEmitter.emit("SHOW_ERROR", "Please log in");
+            router.replace("/(auth)/login_screen"); // Redirect to login if user is not authenticated
+            return;
+        }
         const index = filters.indexOf(filter);
         Animated.timing(translateX, {
             toValue: index * 100,
