@@ -15,7 +15,7 @@ export default function RegisterScreen() {
 
     const handleRegister = async () => {
         try {
-            await registerUser(email, password, username);
+            await registerUser(email, password);
             router.push("/login_screen");
         } catch (error: any) {
             ErrorModalEmitter.emit("SHOW_ERROR", error.message); // Emit error message

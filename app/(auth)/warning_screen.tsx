@@ -1,13 +1,46 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { checkUserFormData } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
+import { useAuth } from "../hooks/useAuth";
 
 const WarningScreen = () => {
     const router = useRouter();
+    const { user } = useAuth();
+    const [isChecking, setIsChecking] = useState(true);
 
     const [firstModalVisible, setFirstModalVisible] = useState(true);
     const [secondModalVisible, setSecondModalVisible] = useState(false);
+
+    useEffect(() => {
+        const checkData = async () => {
+            if (user?.uid) {
+                const hasFormData = await checkUserFormData(user.uid);
+                if (hasFormData) {
+                    router.replace("/(home)");
+                } else {
+                    setIsChecking(false);
+                }
+            }
+        };
+        checkData();
+    }, [user]);
+
+    if (isChecking) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
 
     const handleFirstModalClose = () => {
         setFirstModalVisible(false);
@@ -16,12 +49,12 @@ const WarningScreen = () => {
 
     const handleSecondModalCloseYes = () => {
         setSecondModalVisible(false);
-        router.navigate("/(home)");
+        router.replace("/(home)");
     };
 
     const handleSecondModalCloseNo = () => {
         setSecondModalVisible(false);
-        router.navigate("/form_data_screen");
+        router.replace("/form_data_screen");
     };
 
     return (

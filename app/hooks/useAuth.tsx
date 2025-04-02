@@ -1,72 +1,126 @@
-import { createContext, ReactNode, useContext, useState } from "react";
-import { login, register, saveFormInput } from "../api/api_service";
+import * as SecureStore from "expo-secure-store";
+import {
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
+import { login, register } from "../api/api_service";
+
+interface User {
+    uid: string;
+    email: string;
+}
 
 interface AuthContextType {
-    user: any;
-    registerUser: (
-        email: string,
-        password: string,
-        displayName: string
-    ) => Promise<void>;
+    user: User | null;
+    isLoading: boolean;
     loginUser: (email: string, password: string) => Promise<void>;
-    saveForm: (uid: string, formData: any) => Promise<void>;
-    logout: () => void;
+    registerUser: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-    undefined
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-    children: ReactNode;
-}
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-    const [user, setUser] = useState<any>(null);
+    useEffect(() => {
+        checkLoginState();
+    }, []);
 
-    const registerUser = async (email: string, password: string) => {
-        const response = await register(email, password);
-        if (response.uid) {
-            setUser({ uid: response.uid, email });
-        } else {
-            throw new Error(response.error || "Registration failed");
+    const checkLoginState = async () => {
+        try {
+            const token = await SecureStore.getItemAsync("userToken");
+            const userData = await SecureStore.getItemAsync("userData");
+
+            if (token && userData) {
+                setUser(JSON.parse(userData));
+            }
+        } catch (error) {
+            console.error("Error checking login state:", error);
+        } finally {
+            // Always set loading to false after checking
+            setIsLoading(false);
         }
     };
 
     const loginUser = async (email: string, password: string) => {
-        const response = await login(email, password);
-        if (response.uid) {
-            setUser({ uid: response.uid, email });
-        } else {
-            throw new Error(response.error || "Login failed");
+        try {
+            const response = await login(email, password);
+            if (response.uid) {
+                const userData = { uid: response.uid, email };
+                await SecureStore.setItemAsync(
+                    "userToken",
+                    response.token || ""
+                );
+                await SecureStore.setItemAsync(
+                    "userData",
+                    JSON.stringify(userData)
+                );
+                setUser(userData);
+                return userData;
+            }
+            throw new Error("Login failed");
+        } catch (error) {
+            console.error("Login error:", error);
+            throw error;
         }
     };
 
-    const saveForm = async (uid: string, formData: any) => {
-        const response = await saveFormInput(uid, formData);
-        if (!response.id) {
-            throw new Error(response.error || "Failed to save form data");
+    const registerUser = async (email: string, password: string) => {
+        try {
+            const response = await register(email, password);
+            if (response.uid) {
+                const userData = { uid: response.uid, email };
+                await SecureStore.setItemAsync(
+                    "userToken",
+                    response.token || ""
+                );
+                await SecureStore.setItemAsync(
+                    "userData",
+                    JSON.stringify(userData)
+                );
+                setUser(userData);
+            }
+        } catch (error) {
+            console.error("Register error:", error);
+            throw error;
         }
     };
 
-    const logout = () => {
-        setUser(null);
-        // Clear any session-related data here (e.g., AsyncStorage, localStorage, etc.)
+    const logout = async () => {
+        try {
+            await SecureStore.deleteItemAsync("userToken");
+            await SecureStore.deleteItemAsync("userData");
+            setUser(null);
+        } catch (error) {
+            console.error("Logout error:", error);
+            throw error;
+        }
     };
 
     return (
         <AuthContext.Provider
-            value={{ user, registerUser, loginUser, saveForm, logout }}
+            value={{
+                user,
+                isLoading,
+                loginUser,
+                registerUser,
+                logout,
+            }}
         >
             {children}
         </AuthContext.Provider>
     );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {
         throw new Error("useAuth must be used within an AuthProvider");
     }
     return context;
-};
+}

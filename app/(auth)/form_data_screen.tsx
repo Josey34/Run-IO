@@ -54,6 +54,11 @@ const FormDataScreen: React.FC = () => {
             }, 3000);
         } else {
             try {
+                if (!user) {
+                    setModalMessage("User not authenticated");
+                    setModalVisible(true);
+                    return;
+                }
                 const response = await saveFormInput(user.uid, {
                     age,
                     weight,
@@ -63,7 +68,7 @@ const FormDataScreen: React.FC = () => {
                 if (response.message === "Data stored successfully") {
                     setModalMessage("Data stored successfully");
                     setModalVisible(true);
-                    router.push("/(home)");
+                    router.replace("/(home)");
                 } else {
                     setModalMessage(response.error || "Unknown error occurred");
                     setModalVisible(true);

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { useRef, useState } from "react";
 import {
     Animated,
@@ -8,11 +8,13 @@ import {
     StyleSheet,
     View,
 } from "react-native";
+import { useAuth } from "../hooks/useAuth";
 
 const { width } = Dimensions.get("window");
 const TAB_WIDTH = (width - 48) / 4; // 48 is the total horizontal padding (24 * 2)
 
 export default function HomeLayout() {
+    const { user, isLoading } = useAuth();
     const [activeIndex, setActiveIndex] = useState(0);
     const translateX = useRef(new Animated.Value(0)).current;
     const scaleValues = useRef([
@@ -21,6 +23,10 @@ export default function HomeLayout() {
         new Animated.Value(1),
         new Animated.Value(1),
     ]).current;
+
+    if (!user) {
+        return <Redirect href="/(auth)/welcome_screen" />;
+    }
 
     const animateTab = (index: number) => {
         // Animate the sliding indicator

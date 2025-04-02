@@ -1,6 +1,23 @@
 import axios from "axios";
+import { EventEmitter } from "events";
 
-const API_URL = "http://192.168.40.103:3001/api";
+const API_URL = "http://192.168.40.52:3001/api";
+
+export const ErrorModalEmitter = new EventEmitter();
+
+// Error handler
+const handleAxiosError = (error: any) => {
+    let errorMessage = "An unknown error occurred";
+    if (error.response) {
+        errorMessage = error.response.data.message || errorMessage;
+    } else if (error.request) {
+        errorMessage = "No response received from the server";
+    } else {
+        errorMessage = error.message;
+    }
+
+    ErrorModalEmitter.emit("SHOW_ERROR", errorMessage);
+};
 
 export const register = async (email: string, password: string) => {
     try {
@@ -21,10 +38,6 @@ export const login = async (email: string, password: string) => {
             email,
             password,
         });
-        console.log(email, password);
-        console.log("====================================");
-        console.log(response.data);
-        console.log("====================================");
         return response.data;
     } catch (error) {
         console.error("Error during login request:", error);
@@ -43,6 +56,33 @@ export const saveFormInput = async (userId: string, data: object) => {
     } catch (error) {
         console.error("Error saving form data to backend:", error);
         throw new Error("Failed to save form data");
+    }
+};
+
+export const checkUserFormData = async (userId: string) => {
+    try {
+        const response = await fetch(`${API_URL}/check-user-data/${userId}`);
+        if (!response.ok) {
+            throw new Error("Failed to check user data");
+        }
+        const data = await response.json();
+        return data.exists;
+    } catch (error) {
+        console.error("Error checking user data:", error);
+        throw error;
+    }
+};
+
+export const getUserFormData = async (userId: string) => {
+    try {
+        const response = await fetch(`${API_URL}/get-user-data/${userId}`);
+        if (!response.ok) {
+            throw new Error("Failed to get user data");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error getting user data:", error);
+        throw error;
     }
 };
 
@@ -115,19 +155,3 @@ export const fetchUserRuns = async (userId: string) => {
         throw new Error("Failed to fetch run data");
     }
 };
-
-const handleAxiosError = (error: any) => {
-    let errorMessage = "An unknown error occurred";
-    if (error.response) {
-        errorMessage = error.response.data.message || errorMessage;
-    } else if (error.request) {
-        errorMessage = "No response received from the server";
-    } else {
-        errorMessage = error.message;
-    }
-
-    ErrorModalEmitter.emit("SHOW_ERROR", errorMessage);
-};
-
-import { EventEmitter } from "events";
-export const ErrorModalEmitter = new EventEmitter();

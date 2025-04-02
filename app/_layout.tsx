@@ -3,16 +3,63 @@ import {
     DefaultTheme,
     ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 import { TailwindProvider } from "tailwindcss-react-native";
 import { ErrorModalEmitter } from "./api/api_service";
 import ErrorModal from "./components/ErrorModal";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import useColorScheme from "./hooks/useColorScheme";
 import store from "./redux/store";
+
+// Inner layout component to handle auth
+function InnerLayout() {
+    const { user } = useAuth();
+    const segments = useSegments();
+    const router = useRouter();
+
+    useEffect(() => {
+        const inAuthGroup = segments[0] === "(auth)";
+        const inHomeGroup = segments[0] === "(home)";
+
+        if (!user && inHomeGroup) {
+            // Redirect to welcome screen if trying to access protected routes while not authenticated
+            router.replace("/(auth)/welcome_screen");
+        }
+    }, [user, segments]);
+
+    return (
+        <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen
+                name="(auth)/welcome_screen"
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="(auth)/index"
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="(home)/index"
+                options={{ headerShown: false }}
+            />
+            {/* Add other screens here */}
+            <Stack.Screen
+                name="(auth)/login_screen"
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="(auth)/register_screen"
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="(auth)/form_data_screen"
+                options={{ headerShown: false }}
+            />
+        </Stack>
+    );
+}
 
 export default function Layout() {
     const colorScheme: any = useColorScheme();
@@ -42,21 +89,7 @@ export default function Layout() {
                         style={colorScheme === "dark" ? "light" : "dark"}
                     />
                     <AuthProvider>
-                        <Stack screenOptions={{ headerShown: false }}>
-                            {/* Remove the leading dot and .tsx extension */}
-                            <Stack.Screen
-                                name="(auth)/welcome_screen"
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="(auth)/index"
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="(home)/index"
-                                options={{ headerShown: false }}
-                            />
-                        </Stack>
+                        <InnerLayout />
                     </AuthProvider>
                     <ErrorModal
                         visible={errorVisible}

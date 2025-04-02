@@ -2,7 +2,7 @@ import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
-import { ErrorModalEmitter } from "../api/api_service";
+import { checkUserFormData, ErrorModalEmitter } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
 import { useAuth } from "../hooks/useAuth";
 
@@ -11,13 +11,30 @@ export default function LoginScreen() {
     const { loginUser } = useAuth();
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleLogin = async () => {
+        if (isLoading) return;
+
+        setIsLoading(true);
         try {
-            await loginUser(email, password);
-            router.push("/warning_screen");
+            // Login the user
+            const userData = await loginUser(email, password);
+
+            // Check if user has already submitted form data
+            const hasFormData = await checkUserFormData(userData.uid);
+
+            if (hasFormData) {
+                // If user has already submitted form data, go directly to home
+                router.replace("/(home)");
+            } else {
+                // If no form data exists, go to warning screen
+                router.replace("/(auth)/warning_screen");
+            }
         } catch (error: any) {
             ErrorModalEmitter.emit("SHOW_ERROR", error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 

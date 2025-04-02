@@ -11,7 +11,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { ErrorModalEmitter } from "../api/api_service";
 import CustomModal from "../components/CustomModal";
 import { useAuth } from "../hooks/useAuth";
 import useFetch from "../hooks/useFetch";
@@ -51,10 +50,6 @@ const ChallengeScreen = () => {
 
     const filters = ["All", "On Going", "Completed"];
 
-    useEffect(() => {
-        fetchFromBackend();
-    }, []);
-
     const filteredChallenges = challenges.filter((challenge) => {
         if (filter === "All") return true;
         return filter === "Completed"
@@ -63,11 +58,8 @@ const ChallengeScreen = () => {
     });
 
     useEffect(() => {
-        if (!user?.uid) {
-            ErrorModalEmitter.emit("SHOW_ERROR", "Please log in");
-            router.replace("/(auth)/login_screen"); // Redirect to login if user is not authenticated
-            return;
-        }
+        fetchFromBackend();
+
         const index = filters.indexOf(filter);
         Animated.timing(translateX, {
             toValue: index * 100,

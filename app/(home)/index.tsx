@@ -14,7 +14,6 @@ import {
     View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { ErrorModalEmitter } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
 import { useAuth } from "../hooks/useAuth";
 import useFetch from "../hooks/useFetch";
@@ -50,15 +49,7 @@ const HomeScreen = () => {
     const { fetchRun } = useFetch<Run[]>("");
     const [todayDistance, setTodayDistance] = useState(0);
 
-    const redirectToHome = async () => {
-        if (!user?.uid) {
-            await ErrorModalEmitter.emit("SHOW_ERROR", "Please login");
-            return;
-        }
-        await router.navigate("/(auth)/login_screen");
-    };
     useEffect(() => {
-        redirectToHome();
         const getLocation = async () => {
             try {
                 const { status } =

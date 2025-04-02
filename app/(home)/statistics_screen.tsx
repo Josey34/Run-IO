@@ -87,11 +87,6 @@ const StatisticsScreen = () => {
     };
 
     const onRefresh = async () => {
-        if (!user?.uid) {
-            ErrorModalEmitter.emit("SHOW_ERROR", "Please log in");
-            router.replace("/(auth)/login_screen"); // Redirect to login if user is not authenticated
-            return;
-        }
         setRefreshing(true);
         await loadRuns();
         setRefreshing(false);

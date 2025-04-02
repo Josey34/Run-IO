@@ -373,11 +373,6 @@ const RunningScreen = () => {
     };
 
     useEffect(() => {
-        if (!user?.uid) {
-            ErrorModalEmitter.emit("SHOW_ERROR", "Please log in");
-            router.replace("/(auth)/login_screen"); // Redirect to login if user is not authenticated
-            return;
-        }
         return () => {
             locationSubscription.current?.remove();
             pedometerSubscription.current?.remove();

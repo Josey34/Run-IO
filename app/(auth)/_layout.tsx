@@ -1,6 +1,14 @@
 import { Stack } from "expo-router";
+import { ActivityIndicator } from "react-native";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AuthLayout() {
+    const { user, isLoading } = useAuth();
+
+    if (isLoading) {
+        return <ActivityIndicator color="#000" />;
+    }
+
     return (
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen
