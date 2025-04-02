@@ -97,7 +97,25 @@ const StatisticsScreen = () => {
         setRefreshing(false);
     };
 
+    const loginError = () => {
+        if (!user?.uid) {
+            return (
+                <View style={styles.errorContainer}>
+                    <MaterialCommunityIcons
+                        name="account-alert"
+                        size={48}
+                        color="#FF4B4B"
+                    />
+                    <Text style={styles.errorText}>
+                        Please log in to view statistics
+                    </Text>
+                </View>
+            );
+        }
+    };
+
     useEffect(() => {
+        loginError();
         loadRuns();
     }, [user]);
 
@@ -243,21 +261,6 @@ const StatisticsScreen = () => {
         );
     }
 
-    if (!user?.uid) {
-        return (
-            <View style={styles.errorContainer}>
-                <MaterialCommunityIcons
-                    name="account-alert"
-                    size={48}
-                    color="#FF4B4B"
-                />
-                <Text style={styles.errorText}>
-                    Please log in to view statistics
-                </Text>
-            </View>
-        );
-    }
-
     if (!statistics) {
         return <EmptyState />;
     }
@@ -278,7 +281,6 @@ const StatisticsScreen = () => {
             <View style={styles.header}>
                 <View>
                     <Text style={styles.title}>Statistics</Text>
-                    <Text style={styles.subtitle}>Josey34</Text>
                 </View>
             </View>
 
@@ -445,17 +447,15 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 15,
-        marginTop: 40,
+        backgroundColor: "#333",
+        padding: 20,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
     title: {
-        fontSize: 26,
+        fontSize: 22,
         fontWeight: "bold",
         color: "#fff",
-    },
-    subtitle: {
-        fontSize: 14,
-        color: "#888",
-        marginTop: 4,
     },
     lastRunContainer: {
         backgroundColor: "#1E2923",

@@ -12,6 +12,10 @@ const globalStyles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 15,
+        backgroundColor: "#333",
+        padding: 20,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
     welcome: {
         fontSize: 24,
