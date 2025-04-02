@@ -13,11 +13,6 @@ const globalStyles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 15,
     },
-    profileImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-    },
     welcome: {
         fontSize: 24,
         color: "#fff",

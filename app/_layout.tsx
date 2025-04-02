@@ -13,7 +13,6 @@ import ErrorModal from "./components/ErrorModal";
 import { AuthProvider } from "./hooks/useAuth";
 import useColorScheme from "./hooks/useColorScheme";
 import store from "./redux/store";
-// import ErrorModal, { ErrorModalEmitter } from "./components/ErrorModal";
 
 export default function Layout() {
     const colorScheme: any = useColorScheme();
@@ -43,19 +42,18 @@ export default function Layout() {
                         style={colorScheme === "dark" ? "light" : "dark"}
                     />
                     <AuthProvider>
-                        {/* Wrap your application with AuthProvider */}
-                        <Stack>
-                            {/* Default route is now (auth)/welcome_screen */}
+                        <Stack screenOptions={{ headerShown: false }}>
+                            {/* Remove the leading dot and .tsx extension */}
                             <Stack.Screen
-                                name="./(auth)/welcome_screen.tsx"
+                                name="(auth)/welcome_screen"
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="(auth)"
+                                name="(auth)/index"
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="(home)"
+                                name="(home)/index"
                                 options={{ headerShown: false }}
                             />
                         </Stack>

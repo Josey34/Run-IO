@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Image,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -281,12 +280,6 @@ const StatisticsScreen = () => {
                     <Text style={styles.title}>Statistics</Text>
                     <Text style={styles.subtitle}>Josey34</Text>
                 </View>
-                <Image
-                    source={{
-                        uri: user.photoURL || "https://i.pravatar.cc/100",
-                    }}
-                    style={styles.profileImage}
-                />
             </View>
 
             {/* Last Run Info */}
@@ -463,11 +456,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#888",
         marginTop: 4,
-    },
-    profileImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
     },
     lastRunContainer: {
         backgroundColor: "#1E2923",

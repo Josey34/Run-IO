@@ -6,7 +6,6 @@ import {
     Animated,
     Easing,
     FlatList,
-    Image,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -125,10 +124,6 @@ const ChallengeScreen = () => {
             {/* Header Section */}
             <View style={styles.header}>
                 <Text style={styles.headerText}>Challenges</Text>
-                <Image
-                    source={{ uri: "https://i.pravatar.cc/300" }}
-                    style={styles.profileImage}
-                />
             </View>
 
             {/* Progress Box with Loading State */}
@@ -310,11 +305,6 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: "bold",
         color: "#fff",
-    },
-    profileImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
     },
     progressBox: {
         backgroundColor: "#fff",
