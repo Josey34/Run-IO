@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
     fetchChallenges,
     fetchUserRuns,
+    predictRunMetrics,
     saveRunData,
     updateChallengeStatus,
 } from "../api/api_service"; // Adjust the import path as needed
@@ -180,6 +181,16 @@ const useFetch = <T>(
         }
     };
 
+    const predictRun = async (userId: string, userData: object) => {
+        try {
+            const predictions = await predictRunMetrics(userId, userData);
+            return predictions;
+        } catch (error) {
+            console.error("Prediction error:", error);
+            throw error;
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [query, fetchWeather, lat, lon]);
@@ -196,6 +207,7 @@ const useFetch = <T>(
         saveRun,
         saving,
         fetchRun,
+        predictRun,
     };
 };
 

@@ -9,7 +9,7 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { saveFormInput } from "../api/api_service";
+import { predictRunMetrics, saveFormInput } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
 import { useAuth } from "../hooks/useAuth"; // Import useAuth to get the user ID
 
@@ -60,11 +60,20 @@ const FormDataScreen: React.FC = () => {
                     return;
                 }
                 const response = await saveFormInput(user.uid, {
+                    userId: user.uid,
                     age,
                     weight,
                     height,
                     gender,
                 });
+
+                const result = await predictRunMetrics(user.uid, {
+                    age,
+                    weight,
+                    height,
+                    gender,
+                });
+                console.log("Prediction result:", result);
                 if (response.message === "Data stored successfully") {
                     setModalMessage("Data stored successfully");
                     setModalVisible(true);

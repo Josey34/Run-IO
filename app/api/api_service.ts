@@ -1,7 +1,7 @@
 import axios from "axios";
 import { EventEmitter } from "events";
 
-const API_URL = "http://192.168.40.52:3001/api";
+const API_URL = "http://192.168.110.176:3001/api";
 
 export const ErrorModalEmitter = new EventEmitter();
 
@@ -153,5 +153,37 @@ export const fetchUserRuns = async (userId: string) => {
         console.error("Error fetching user runs:", error);
         handleAxiosError(error);
         throw new Error("Failed to fetch run data");
+    }
+};
+
+interface UserDatas {
+    gender?: string;
+    age?: string;
+    weight?: string;
+    height?: string;
+}
+
+export const predictRunMetrics = async (
+    userId: string,
+    userDatas: UserDatas
+) => {
+    const genderValue = userDatas?.gender?.toLowerCase() === "woman" ? 1 : 0;
+
+    const userData = {
+        Gender: genderValue,
+        Age: Number(userDatas.age),
+        "Weight(kg)": Number(userDatas.weight),
+        "Height(cm)": Number(userDatas.height),
+    };
+
+    try {
+        const response = await axios.post(`${API_URL}/predict-run`, {
+            userId,
+            userData,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error predicting run metrics:", error);
+        throw error;
     }
 };

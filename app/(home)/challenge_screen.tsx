@@ -19,7 +19,7 @@ interface Challenge {
     id: number;
     type: string;
     distance: number;
-    pace: number;
+    speed: number;
     duration: number;
     completed: boolean;
 }
@@ -198,16 +198,18 @@ const ChallengeScreen = () => {
                                             {item.type}
                                         </Text>
                                         <Text style={styles.challengeDistance}>
-                                            {item.distance} km
+                                            {item?.distance?.toFixed(2)} km
                                         </Text>
                                     </View>
                                     <View style={styles.separator} />
                                     <View style={styles.infoBottom}>
                                         <Text style={styles.challengeDetails}>
-                                            Pace: {item.pace} min/km
+                                            Speed: {item?.speed?.toFixed(2)}{" "}
+                                            km/h
                                         </Text>
                                         <Text style={styles.challengeDetails}>
-                                            Duration: {item.duration} min
+                                            Duration:{" "}
+                                            {item?.duration?.toFixed(0)} min
                                         </Text>
                                     </View>
                                 </View>

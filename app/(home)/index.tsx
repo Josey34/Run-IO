@@ -311,11 +311,9 @@ const HomeScreen = () => {
                 {/* Navigation Button */}
                 <TouchableOpacity
                     style={globalStyles.button}
-                    onPress={() => router.push("/(auth)/welcome_screen")}
+                    onPress={() => router.push("/(auth)/form_data_screen")}
                 >
-                    <Text style={globalStyles.buttonText}>
-                        Go to Welcome Screen
-                    </Text>
+                    <Text style={globalStyles.buttonText}>Go Form Data</Text>
                 </TouchableOpacity>
 
                 {/* Logout Button */}
