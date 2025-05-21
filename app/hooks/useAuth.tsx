@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
     createContext,
@@ -6,7 +7,7 @@ import {
     useEffect,
     useState,
 } from "react";
-import { login, register } from "../api/api_service";
+import { checkUserFormData, login, register } from "../api/api_service";
 
 interface User {
     uid: string;
@@ -16,7 +17,10 @@ interface User {
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
-    loginUser: (email: string, password: string) => Promise<void>;
+    loginUser: (
+        email: string,
+        password: string
+    ) => Promise<{ uid: any; email: string }>;
     registerUser: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -26,6 +30,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const router = useRouter();
 
     useEffect(() => {
         checkLoginState();
@@ -37,7 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userData = await SecureStore.getItemAsync("userData");
 
             if (token && userData) {
-                setUser(JSON.parse(userData));
+                const parsedUserData = JSON.parse(userData);
+                setUser(parsedUserData);
+
+                const hasFormData = await checkUserFormData(parsedUserData.uid);
+
+                if (hasFormData) {
+                    router.replace("/(home)");
+                } else {
+                    router.replace("/(auth)/warning_screen");
+                }
             }
         } catch (error) {
             console.error("Error checking login state:", error);

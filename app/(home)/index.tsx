@@ -308,6 +308,12 @@ const HomeScreen = () => {
                     </ScrollView>
                 </View>
 
+                {/* Logout Button */}
+                <CustomButton
+                    title="Logout"
+                    onPress={handleLogout}
+                    style={{ backgroundColor: "#FF0000" }}
+                />
                 {/* Navigation Button */}
                 <TouchableOpacity
                     style={globalStyles.button}
@@ -315,13 +321,6 @@ const HomeScreen = () => {
                 >
                     <Text style={globalStyles.buttonText}>Go Form Data</Text>
                 </TouchableOpacity>
-
-                {/* Logout Button */}
-                <CustomButton
-                    title="Logout"
-                    onPress={handleLogout}
-                    style={{ backgroundColor: "#FF0000" }}
-                />
             </ScrollView>
         </View>
     );

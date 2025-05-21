@@ -8,10 +8,10 @@ import {
     updateChallengeStatus,
 } from "../api/api_service";
 
-const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
-const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
-const API_KEY_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
-const BASE_URL_WEATHER = `${process.env.EXPO_PUBLIC_WEATHER_API_URL}`;
+const API_KEY_NEWS = process.env.EXPO_PUBLIC_NEWS_API_KEY || "";
+const BASE_URL_NEWS = process.env.EXPO_PUBLIC_NEWS_API_URL || "";
+const API_KEY_WEATHER = process.env.EXPO_PUBLIC_WEATHER_API_KEY || "";
+const BASE_URL_WEATHER = process.env.EXPO_PUBLIC_WEATHER_API_URL || "";
 
 interface Article {
     title: string;
@@ -74,6 +74,12 @@ const useFetch = <T>(
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [saving, setSaving] = useState(false);
 
+    const getYesterdayDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().split("T")[0];
+    };
+
     const fetchData = async () => {
         setLoading(true);
         setError(null);
@@ -82,7 +88,7 @@ const useFetch = <T>(
             const response = await axios.get(BASE_URL_NEWS, {
                 params: {
                     q: query,
-                    from: "2025-03-09",
+                    from: getYesterdayDate(),
                     sortBy: "popularity",
                     apiKey: API_KEY_NEWS,
                 },

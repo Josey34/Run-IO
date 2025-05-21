@@ -17,6 +17,7 @@ import useFetch from "../hooks/useFetch";
 
 interface Challenge {
     id: number;
+    userId: string;
     type: string;
     distance: number;
     speed: number;
@@ -48,9 +49,13 @@ const ChallengeScreen = () => {
         null
     );
 
+    const userChallenges: Challenge[] = challenges.filter(
+        (challenge: Challenge): boolean => challenge?.userId === user?.uid
+    );
+
     const filters = ["All", "On Going", "Completed"];
 
-    const filteredChallenges = challenges.filter((challenge) => {
+    const filteredChallenges = userChallenges.filter((challenge) => {
         if (filter === "All") return true;
         return filter === "Completed"
             ? challenge.completed
@@ -127,13 +132,13 @@ const ChallengeScreen = () => {
                     ) : (
                         <Text style={styles.progressText}>
                             {
-                                challenges.filter(
+                                userChallenges.filter(
                                     (challenge) => challenge.completed
                                 ).length
                             }
                             <Text style={{ color: "#000", fontSize: 18 }}>
                                 {" "}
-                                / {challenges.length}
+                                / {userChallenges.length}
                             </Text>
                         </Text>
                     )}
