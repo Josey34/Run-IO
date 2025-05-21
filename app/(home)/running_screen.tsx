@@ -24,7 +24,6 @@ import {
 } from "../utils/paceCalculations";
 import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
 
-// Constants
 const MIN_DISTANCE_FOR_PACE = 0.001; // 1 meter in kilometers
 const MIN_TOTAL_DISTANCE = 0.01; // 10 meters before showing average pace
 const MAX_VALID_PACE = 30; // Maximum valid pace in min/km
@@ -54,10 +53,8 @@ interface RouteCoordinate {
 const calculatePace = (timeInSeconds: number, distanceInKm: number): number => {
     if (distanceInKm < MIN_DISTANCE_FOR_PACE || timeInSeconds === 0) return 0;
 
-    // Calculate pace in minutes per kilometer
     const paceMinKm = timeInSeconds / 60 / distanceInKm;
 
-    // Validate the pace is within reasonable bounds
     if (paceMinKm >= MIN_VALID_PACE && paceMinKm <= MAX_VALID_PACE) {
         return paceMinKm;
     }
@@ -71,10 +68,8 @@ const calculateAveragePace = (
     if (totalDistanceKm < MIN_TOTAL_DISTANCE || totalTimeSeconds === 0)
         return 0;
 
-    // Calculate average pace in minutes per kilometer
     const avgPace = totalTimeSeconds / 60 / totalDistanceKm;
 
-    // Validate the average pace
     if (avgPace >= MIN_VALID_PACE && avgPace <= MAX_VALID_PACE) {
         return avgPace;
     }
@@ -82,7 +77,6 @@ const calculateAveragePace = (
 };
 
 const RunningScreen = () => {
-    // State
     const { user } = useAuth();
     const [isTracking, setIsTracking] = useState(false);
     const [location, setLocation] =
@@ -112,7 +106,6 @@ const RunningScreen = () => {
     });
     const { saveRun, saving } = useFetch("");
 
-    // Refs
     const mapRef = useRef<MapView>(null);
     const locationSubscription = useRef<Location.LocationSubscription | null>(
         null
@@ -306,10 +299,8 @@ const RunningScreen = () => {
             const now = new Date();
             const endTime = formatLocalTime(now);
 
-            // Calculate total time elapsed
             const timeElapsed = formatDuration(workoutStats.duration);
 
-            // Calculate speeds (km/h)
             const currentSpeed =
                 workoutStats.currentPace > 0
                     ? 60 / workoutStats.currentPace
@@ -320,22 +311,18 @@ const RunningScreen = () => {
                     : 0;
 
             const workoutData = {
-                // Timestamps
                 startTime: workoutStats.startTime,
                 endTime: endTime,
                 timeElapsed: timeElapsed,
                 duration: formatDuration(workoutStats.duration),
 
-                // Distance and Speed
                 distance: Number(workoutStats.distance.toFixed(2)),
                 currentSpeed: Number(currentSpeed.toFixed(2)),
                 averageSpeed: Number(averageSpeed.toFixed(2)),
 
-                // Pace
                 currentPace: formatPace(workoutStats.currentPace),
                 averagePace: formatPace(workoutStats.averagePace),
 
-                // Steps and Route
                 steps: workoutStats.steps,
                 route: routeCoordinates.map((coord) => ({
                     ...coord,

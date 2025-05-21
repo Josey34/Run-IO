@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error("Error checking login state:", error);
         } finally {
-            // Always set loading to false after checking
             setIsLoading(false);
         }
     };

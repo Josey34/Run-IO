@@ -18,7 +18,7 @@ export default function RegisterScreen() {
             await registerUser(email, password);
             router.push("/login_screen");
         } catch (error: any) {
-            ErrorModalEmitter.emit("SHOW_ERROR", error.message); // Emit error message
+            ErrorModalEmitter.emit("SHOW_ERROR", error.message);
         }
     };
 

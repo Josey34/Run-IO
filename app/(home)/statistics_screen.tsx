@@ -135,7 +135,6 @@ const StatisticsScreen = () => {
             };
         }
 
-        // Sort runs by date to get the latest
         const sortedRuns = [...runs].sort(
             (a, b) =>
                 new Date(b.createdAt).getTime() -
@@ -153,13 +152,11 @@ const StatisticsScreen = () => {
             }
         );
 
-        // Calculate total distance
         const totalDistance = runs.reduce(
             (sum, run) => sum + (run.distance || 0),
             0
         );
 
-        // Calculate total time
         const totalSeconds = runs.reduce((sum, run) => {
             if (!run.timeElapsed) return sum;
             const [minutes, seconds] = run.timeElapsed.split(":").map(Number);
@@ -170,7 +167,6 @@ const StatisticsScreen = () => {
         const totalMinutes = Math.floor((totalSeconds % 3600) / 60);
         const totalTime = `${totalHours}h ${totalMinutes}m`;
 
-        // Calculate average speed
         const validSpeeds = runs
             .filter((run) => run.currentSpeed > 0)
             .map((run) => run.currentSpeed);
@@ -180,7 +176,6 @@ const StatisticsScreen = () => {
                   validSpeeds.length
                 : 0;
 
-        // Calculate average pace
         const validPaces = runs
             .filter((run) => run.currentPace && run.currentPace !== "--:--")
             .map((run) => {
@@ -197,12 +192,10 @@ const StatisticsScreen = () => {
             avgPace = `${avgMinutes}:${avgSecs.toString().padStart(2, "0")}`;
         }
 
-        // Calculate total steps
         const totalSteps = runs.reduce((sum, run) => sum + (run.steps || 0), 0);
 
-        // Get last 7 days
         const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date("2025-04-01"); // Using your current date
+            const d = new Date("2025-04-01");
             d.setDate(d.getDate() - i);
             return d.toISOString().split("T")[0];
         }).reverse();

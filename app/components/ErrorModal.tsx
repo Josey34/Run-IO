@@ -19,7 +19,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
     errorMessage,
     onClose,
 }) => {
-    const fadeAnim = React.useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
+    const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
     React.useEffect(() => {
         if (visible) {
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "rgba(0,0,0,0.5)", // Semi-transparent background
+        backgroundColor: "rgba(0,0,0,0.5)",
     },
     modalView: {
         margin: 20,
@@ -81,13 +81,13 @@ const styles = StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: "center",
-        fontSize: 16, // Increased font size for better readability
+        fontSize: 16,
     },
     button: {
         borderRadius: 20,
         paddingVertical: 10,
         paddingHorizontal: 20,
-        backgroundColor: "#2196F3", // A nice blue
+        backgroundColor: "#2196F3",
     },
     buttonText: {
         color: "white",

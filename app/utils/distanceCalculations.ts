@@ -5,7 +5,7 @@ export const haversineDistance = (
     coords2: Location.LocationObjectCoords
 ): number => {
     const toRad = (angle: number) => (angle * Math.PI) / 180;
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = toRad(coords2.latitude - coords1.latitude);
     const dLon = toRad(coords2.longitude - coords1.longitude);
     const a =

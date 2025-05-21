@@ -1,4 +1,3 @@
-// globalStyles.ts
 import { StyleSheet } from "react-native";
 
 const globalStyles = StyleSheet.create({
@@ -40,8 +39,8 @@ const globalStyles = StyleSheet.create({
         borderRadius: 10,
         paddingLeft: 40,
         marginBottom: 20,
-        flexDirection: "row",  // Placing map and text side by side
-        justifyContent: "space-between",  // Ensures space between text and map
+        flexDirection: "row",
+        justifyContent: "space-between",
         alignItems: "center",
     },
     runTitle: {
@@ -53,15 +52,15 @@ const globalStyles = StyleSheet.create({
         fontSize: 22,
         fontWeight: "bold",
         color: "#333",
-        marginBottom: 10, // Added a bit of space below the distance
+        marginBottom: 10,
     },
     mapContainer: {
-        width: "50%",  // Map takes 50% of the width
-        height: 120,  // Adjusted height for a more compact map
+        width: "50%",
+        height: 120,
         borderRadius: 10,
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: "#dcdcdc",  // Light border color for the map container
+        borderColor: "#dcdcdc",
         backgroundColor: "#fff",
         alignItems: 'center',
     },

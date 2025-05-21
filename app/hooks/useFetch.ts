@@ -6,7 +6,7 @@ import {
     predictRunMetrics,
     saveRunData,
     updateChallengeStatus,
-} from "../api/api_service"; // Adjust the import path as needed
+} from "../api/api_service";
 
 const API_KEY_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_KEY}`;
 const BASE_URL_NEWS = `${process.env.EXPO_PUBLIC_NEWS_API_URL}`;
@@ -136,7 +136,7 @@ const useFetch = <T>(
 
         try {
             await updateChallengeStatus(challengeId, completed);
-            await fetchFromBackend(true); // Refresh data after update
+            await fetchFromBackend(true);
             return true;
         } catch (err: any) {
             setError(err.message);

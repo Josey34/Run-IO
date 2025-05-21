@@ -14,7 +14,6 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import useColorScheme from "./hooks/useColorScheme";
 import store from "./redux/store";
 
-// Inner layout component to handle auth
 function InnerLayout() {
     const { user } = useAuth();
     const segments = useSegments();
@@ -25,7 +24,6 @@ function InnerLayout() {
         const inHomeGroup = segments[0] === "(home)";
 
         if (!user && inHomeGroup) {
-            // Redirect to welcome screen if trying to access protected routes while not authenticated
             router.replace("/(auth)/welcome_screen");
         }
     }, [user, segments]);

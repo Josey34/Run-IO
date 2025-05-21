@@ -18,17 +18,13 @@ export default function LoginScreen() {
 
         setIsLoading(true);
         try {
-            // Login the user
             const userData = await loginUser(email, password);
 
-            // Check if user has already submitted form data
             const hasFormData = await checkUserFormData(userData.uid);
 
             if (hasFormData) {
-                // If user has already submitted form data, go directly to home
                 router.replace("/(home)");
             } else {
-                // If no form data exists, go to warning screen
                 router.replace("/(auth)/warning_screen");
             }
         } catch (error: any) {

@@ -23,8 +23,8 @@ interface Article {
     title: string;
     description?: string;
     urlToImage?: string;
-    source: { name: string };
-    url: string;
+    source?: { name: string };
+    url?: string;
 }
 
 interface Run {
@@ -268,7 +268,7 @@ const HomeScreen = () => {
                         nestedScrollEnabled
                         onScroll={handleScroll}
                         scrollEventThrottle={400}
-                        style={{ maxHeight: 400 }} // Adjust the height as needed
+                        style={{ maxHeight: 400 }}
                     >
                         {loading ? (
                             <ActivityIndicator size="large" color="#1e90ff" />
@@ -281,7 +281,7 @@ const HomeScreen = () => {
                                 <TouchableOpacity
                                     key={index}
                                     style={globalStyles.newsItem}
-                                    onPress={() => handlePress(item.url)} // Handle press event
+                                    onPress={() => handlePress(item.url)}
                                 >
                                     {item.urlToImage && (
                                         <Image

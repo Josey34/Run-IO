@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 
 const { width } = Dimensions.get("window");
-const TAB_WIDTH = (width - 48) / 4; // 48 is the total horizontal padding (24 * 2)
+const TAB_WIDTH = (width - 48) / 4;
 
 export default function HomeLayout() {
     const { user, isLoading } = useAuth();
@@ -29,13 +29,11 @@ export default function HomeLayout() {
     }
 
     const animateTab = (index: number) => {
-        // Animate the sliding indicator
         Animated.spring(translateX, {
-            toValue: index * TAB_WIDTH, // Pindahkan slider per tab dengan presisi
+            toValue: index * TAB_WIDTH,
             useNativeDriver: true,
         }).start();
 
-        // Animate icon scaling
         scaleValues.forEach((scale, i) => {
             Animated.spring(scale, {
                 toValue: i === index ? 1.2 : 1,

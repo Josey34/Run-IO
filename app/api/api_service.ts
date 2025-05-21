@@ -5,7 +5,6 @@ const API_URL = "http://192.168.110.176:3001/api";
 
 export const ErrorModalEmitter = new EventEmitter();
 
-// Error handler
 const handleAxiosError = (error: any) => {
     let errorMessage = "An unknown error occurred";
     if (error.response) {

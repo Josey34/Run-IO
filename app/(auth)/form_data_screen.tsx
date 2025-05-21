@@ -11,11 +11,11 @@ import {
 } from "react-native";
 import { predictRunMetrics, saveFormInput } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
-import { useAuth } from "../hooks/useAuth"; // Import useAuth to get the user ID
+import { useAuth } from "../hooks/useAuth";
 
 const FormDataScreen: React.FC = () => {
     const router = useRouter();
-    const { user } = useAuth(); // Get the user object from useAuth
+    const { user } = useAuth();
 
     const [age, setAge] = useState<string>("");
     const [weight, setWeight] = useState<string>("");

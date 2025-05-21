@@ -154,13 +154,13 @@ const ChallengeScreen = () => {
                         key={option}
                         style={styles.filterButton}
                         onPress={() => setFilter(option)}
-                        disabled={loading} // Disable during loading
+                        disabled={loading}
                     >
                         <Text
                             style={[
                                 styles.filterText,
                                 filter === option && styles.activeFilterText,
-                                loading && styles.disabledText, // Add disabled style
+                                loading && styles.disabledText,
                             ]}
                         >
                             {option}
