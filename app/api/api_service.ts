@@ -1,7 +1,7 @@
 import axios from "axios";
 import { EventEmitter } from "events";
 
-const API_URL = "http://192.168.110.176:3001/api";
+const API_URL = "https://run-io-backend.vercel.app/api";
 
 export const ErrorModalEmitter = new EventEmitter();
 
