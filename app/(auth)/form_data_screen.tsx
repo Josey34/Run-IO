@@ -21,6 +21,7 @@ const FormDataScreen: React.FC = () => {
     const [weight, setWeight] = useState<string>("");
     const [height, setHeight] = useState<string>("");
     const [gender, setGender] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const [errors, setErrors] = useState<{
         age?: string;
@@ -33,6 +34,7 @@ const FormDataScreen: React.FC = () => {
     const [modalMessage, setModalMessage] = useState("");
 
     const handleSubmit = async () => {
+        setIsLoading(true);
         const newErrors: {
             age?: string;
             weight?: string;
@@ -52,6 +54,7 @@ const FormDataScreen: React.FC = () => {
             setTimeout(() => {
                 setErrors({});
             }, 3000);
+            setIsLoading(false);
         } else {
             try {
                 if (!user) {
@@ -86,6 +89,8 @@ const FormDataScreen: React.FC = () => {
                 console.error("Error submitting form data:", error);
                 setModalMessage(error.response?.data?.details || error.message);
                 setModalVisible(true);
+            } finally {
+                setIsLoading(false);
             }
         }
     };
@@ -144,7 +149,11 @@ const FormDataScreen: React.FC = () => {
                     <Text style={styles.error}>{errors.gender}</Text>
                 )}
 
-                <CustomButton title={"PROCESS"} onPress={handleSubmit} />
+                <CustomButton
+                    title={"PROCESS"}
+                    onPress={handleSubmit}
+                    disabled={isLoading}
+                />
             </View>
 
             {/* Modal for displaying messages */}
