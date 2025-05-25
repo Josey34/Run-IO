@@ -21,3 +21,9 @@ export const formatDuration = (seconds: number): string => {
               .padStart(2, "0")}`
         : `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
+
+export default {
+    paceToSpeed,
+    formatPace,
+    formatDuration,
+};

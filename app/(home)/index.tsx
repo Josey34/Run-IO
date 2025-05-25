@@ -14,9 +14,9 @@ import {
     View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import { useAuth } from "../../hooks/useAuth";
 import CustomButton from "../components/CustomButton";
-import { useAuth } from "../hooks/useAuth";
-import useFetch from "../hooks/useFetch";
+import useFetch from "../../hooks/useFetch";
 import globalStyles from "../styles/global_styles";
 
 interface Article {

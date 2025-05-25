@@ -10,3 +10,8 @@ export const formatLocalTime = (date: Date): string => {
 export const formatDateTime = (date: Date): string => {
     return date.toISOString().slice(0, 19).replace("T", " ");
 };
+
+export default {
+    formatLocalTime,
+    formatDateTime,
+};

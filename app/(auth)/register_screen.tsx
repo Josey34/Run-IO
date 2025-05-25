@@ -2,9 +2,9 @@ import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import { useAuth } from "../../hooks/useAuth";
 import { ErrorModalEmitter } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
-import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterScreen() {
     const router = useRouter();

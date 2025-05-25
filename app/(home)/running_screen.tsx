@@ -1,4 +1,3 @@
-import { mapStyle } from "@/constants/Map";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
@@ -12,10 +11,11 @@ import {
     View,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import { mapStyle } from "../../constants/Map";
+import { useAuth } from "../../hooks/useAuth";
+import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
 import WorkoutCompleteModal from "../components/WorkoutCompleteModal";
-import { useAuth } from "../hooks/useAuth";
-import useFetch from "../hooks/useFetch";
 import { haversineDistance } from "../utils/distanceCalculations";
 import {
     formatDuration,

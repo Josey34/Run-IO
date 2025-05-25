@@ -3,64 +3,16 @@ import {
     DefaultTheme,
     ThemeProvider,
 } from "@react-navigation/native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { Provider as ReduxProvider } from "react-redux";
-import { TailwindProvider } from "tailwindcss-react-native";
+import { useEffect, useState } from "react";
+import { AuthProvider } from "../hooks/useAuth";
+import useColorScheme from "../hooks/useColorScheme";
 import { ErrorModalEmitter } from "./api/api_service";
 import ErrorModal from "./components/ErrorModal";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
-import useColorScheme from "./hooks/useColorScheme";
-import store from "./redux/store";
-
-function InnerLayout() {
-    const { user } = useAuth();
-    const segments = useSegments();
-    const router = useRouter();
-
-    useEffect(() => {
-        const inAuthGroup = segments[0] === "(auth)";
-        const inHomeGroup = segments[0] === "(home)";
-
-        if (!user && inHomeGroup) {
-            router.replace("/(auth)/welcome_screen");
-        }
-    }, [user, segments]);
-
-    return (
-        <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-                name="(auth)/welcome_screen"
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="(auth)/index"
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="(home)/index"
-                options={{ headerShown: false }}
-            />
-            {/* Add other screens here */}
-            <Stack.Screen
-                name="(auth)/login_screen"
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="(auth)/register_screen"
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="(auth)/form_data_screen"
-                options={{ headerShown: false }}
-            />
-        </Stack>
-    );
-}
 
 export default function Layout() {
-    const colorScheme: any = useColorScheme();
+    const { colorScheme } = useColorScheme();
     const [errorVisible, setErrorVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -78,24 +30,18 @@ export default function Layout() {
     }, []);
 
     return (
-        <ReduxProvider store={store}>
-            <TailwindProvider>
-                <ThemeProvider
-                    value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-                >
-                    <StatusBar
-                        style={colorScheme === "dark" ? "light" : "dark"}
-                    />
-                    <AuthProvider>
-                        <InnerLayout />
-                    </AuthProvider>
-                    <ErrorModal
-                        visible={errorVisible}
-                        errorMessage={errorMessage}
-                        onClose={() => setErrorVisible(false)}
-                    />
-                </ThemeProvider>
-            </TailwindProvider>
-        </ReduxProvider>
+        <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+            <AuthProvider>
+                <Slot />
+            </AuthProvider>
+            <ErrorModal
+                visible={errorVisible}
+                errorMessage={errorMessage}
+                onClose={() => setErrorVisible(false)}
+            />
+        </ThemeProvider>
     );
 }

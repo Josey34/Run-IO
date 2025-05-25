@@ -8,7 +8,7 @@ import {
     StyleSheet,
     View,
 } from "react-native";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 
 const { width } = Dimensions.get("window");
 const TAB_WIDTH = (width - 48) / 4;

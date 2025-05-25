@@ -8,9 +8,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useAuth } from "../../hooks/useAuth";
 import { checkUserFormData } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
-import { useAuth } from "../hooks/useAuth";
 
 const WarningScreen = () => {
     const router = useRouter();

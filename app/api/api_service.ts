@@ -54,6 +54,7 @@ export const saveFormInput = async (userId: string, data: object) => {
         return response.data;
     } catch (error) {
         console.error("Error saving form data to backend:", error);
+        handleAxiosError(error);
         throw new Error("Failed to save form data");
     }
 };
@@ -68,6 +69,7 @@ export const checkUserFormData = async (userId: string) => {
         return data.exists;
     } catch (error) {
         console.error("Error checking user data:", error);
+        handleAxiosError(error);
         throw error;
     }
 };
@@ -81,6 +83,7 @@ export const getUserFormData = async (userId: string) => {
         return await response.json();
     } catch (error) {
         console.error("Error getting user data:", error);
+        handleAxiosError(error);
         throw error;
     }
 };
@@ -91,6 +94,7 @@ export const fetchChallenges = async () => {
         return response.data;
     } catch (error) {
         console.error("Error fetching challenges from backend:", error);
+        handleAxiosError(error);
         throw new Error("Failed to fetch challenges");
     }
 };
@@ -183,6 +187,23 @@ export const predictRunMetrics = async (
         return response.data;
     } catch (error) {
         console.error("Error predicting run metrics:", error);
+        handleAxiosError(error);
         throw error;
     }
+};
+
+export default {
+    register,
+    login,
+    saveFormInput,
+    checkUserFormData,
+    getUserFormData,
+    fetchChallenges,
+    updateChallengeStatus,
+    saveRunData,
+    fetchUserRuns,
+    predictRunMetrics,
+    ErrorModalEmitter,
+    handleAxiosError,
+    API_URL,
 };

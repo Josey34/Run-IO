@@ -12,8 +12,8 @@ import {
     View,
 } from "react-native";
 import CustomModal from "../components/CustomModal";
-import { useAuth } from "../hooks/useAuth";
-import useFetch from "../hooks/useFetch";
+import { useAuth } from "../../hooks/useAuth";
+import useFetch from "../../hooks/useFetch";
 
 interface Challenge {
     id: number;

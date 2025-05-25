@@ -7,7 +7,7 @@ import {
     useEffect,
     useState,
 } from "react";
-import { checkUserFormData, login, register } from "../api/api_service";
+import { checkUserFormData, login, register } from "../app/api/api_service";
 
 interface User {
     uid: string;

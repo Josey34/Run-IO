@@ -10,9 +10,9 @@ import {
     View,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+import { useAuth } from "../../hooks/useAuth";
+import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
-import { useAuth } from "../hooks/useAuth";
-import useFetch from "../hooks/useFetch";
 
 interface Run {
     id?: string;
@@ -334,7 +334,7 @@ const StatisticsScreen = () => {
                 </View>
                 <View style={styles.statBox}>
                     <MaterialCommunityIcons
-                        name="speed-meter"
+                        name="speedometer"
                         size={24}
                         color="#FF4B4B"
                     />

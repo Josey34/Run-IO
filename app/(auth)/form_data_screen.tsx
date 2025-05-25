@@ -9,9 +9,9 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { useAuth } from "../../hooks/useAuth";
 import { predictRunMetrics, saveFormInput } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
-import { useAuth } from "../hooks/useAuth";
 
 const FormDataScreen: React.FC = () => {
     const router = useRouter();

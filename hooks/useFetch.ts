@@ -6,7 +6,7 @@ import {
     predictRunMetrics,
     saveRunData,
     updateChallengeStatus,
-} from "../api/api_service";
+} from "../app/api/api_service";
 
 const API_KEY_NEWS = process.env.EXPO_PUBLIC_NEWS_API_KEY || "";
 const BASE_URL_NEWS = process.env.EXPO_PUBLIC_NEWS_API_URL || "";
