@@ -30,23 +30,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-
     const router = useRouter();
-
-    useEffect(() => {
-        checkLoginState();
-    }, []);
 
     const checkLoginState = async () => {
         try {
+            console.log("Checking login state...");
             const token = await SecureStore.getItemAsync("userToken");
             const userData = await SecureStore.getItemAsync("userData");
+            console.log(
+                "Token exists:",
+                !!token,
+                "UserData exists:",
+                !!userData
+            );
 
             if (token && userData) {
                 const parsedUserData = JSON.parse(userData);
                 setUser(parsedUserData);
+                console.log("User data parsed successfully");
 
                 const hasFormData = await checkUserFormData(parsedUserData.uid);
+                console.log("Has form data:", hasFormData);
 
                 if (hasFormData) {
                     router.replace("/(home)");
@@ -55,11 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
         } catch (error) {
-            console.error("Error checking login state:", error);
+            console.error("Login state check error:", error);
+            // Don't rethrow - just log the error and continue
         } finally {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        checkLoginState().catch((error) => {
+            console.error("Effect error in AuthProvider:", error);
+        });
+    }, []);
 
     const loginUser = async (email: string, password: string) => {
         try {
