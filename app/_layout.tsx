@@ -17,31 +17,41 @@ export default function Layout() {
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
-        const showError = (message: string) => {
-            setErrorMessage(message);
-            setErrorVisible(true);
-        };
+        try {
+            const showError = (message: string) => {
+                console.error("App Error:", message);
+                setErrorMessage(message);
+                setErrorVisible(true);
+            };
 
-        ErrorModalEmitter.on("SHOW_ERROR", showError);
+            ErrorModalEmitter.on("SHOW_ERROR", showError);
 
-        return () => {
-            ErrorModalEmitter.off("SHOW_ERROR", showError);
-        };
+            return () => {
+                ErrorModalEmitter.off("SHOW_ERROR", showError);
+            };
+        } catch (error) {
+            console.error("Layout Effect Error:", error);
+        }
     }, []);
 
-    return (
-        <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-            <AuthProvider>
-                <Slot />
-            </AuthProvider>
-            <ErrorModal
-                visible={errorVisible}
-                errorMessage={errorMessage}
-                onClose={() => setErrorVisible(false)}
-            />
-        </ThemeProvider>
-    );
+    try {
+        return (
+            <ThemeProvider
+                value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+            >
+                <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+                <AuthProvider>
+                    <Slot />
+                </AuthProvider>
+                <ErrorModal
+                    visible={errorVisible}
+                    errorMessage={errorMessage}
+                    onClose={() => setErrorVisible(false)}
+                />
+            </ThemeProvider>
+        );
+    } catch (error) {
+        console.error("Layout Render Error:", error);
+        return null;
+    }
 }

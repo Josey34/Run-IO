@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../../hooks/useAuth";
-import CustomButton from "../components/CustomButton";
 import useFetch from "../../hooks/useFetch";
+import CustomButton from "../components/CustomButton";
 import globalStyles from "../styles/global_styles";
 
 interface Article {
@@ -113,9 +113,10 @@ const HomeScreen = () => {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await refetch();
-        if (user?.uid) {
-            try {
+        try {
+            await refetch();
+
+            if (user?.uid) {
                 const runs = await fetchRun(user.uid);
                 if (runs && Array.isArray(runs)) {
                     const today = new Date().toISOString().split("T")[0];
@@ -131,11 +132,12 @@ const HomeScreen = () => {
                     );
                     setTodayDistance(Number(totalDistance.toFixed(2)));
                 }
-            } catch (error) {
-                console.error("Error refreshing today's runs:", error);
             }
+        } catch (error) {
+            console.error("Error refreshing data:", error);
+        } finally {
+            setRefreshing(false);
         }
-        setRefreshing(false);
     };
 
     const getTimeFromLocalTime = (localtime: string) => {
