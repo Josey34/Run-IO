@@ -6,10 +6,13 @@ import {
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
+import { enableScreens } from "react-native-screens";
 import { AuthProvider } from "../hooks/useAuth";
 import useColorScheme from "../hooks/useColorScheme";
 import { ErrorModalEmitter } from "./api/api_service";
 import ErrorModal from "./components/ErrorModal";
+
+enableScreens();
 
 export default function Layout() {
     const { colorScheme } = useColorScheme();
