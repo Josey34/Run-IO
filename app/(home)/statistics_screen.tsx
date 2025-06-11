@@ -40,7 +40,7 @@ interface StatisticsData {
     totalTime: string;
     avgPace: string;
     avgSpeed: number;
-    totalSteps: number;
+    // totalSteps: number;
     chartData: {
         labels: string[];
         datasets: {
@@ -121,7 +121,7 @@ const StatisticsScreen = () => {
                 totalTime: "0h 0m",
                 avgPace: "--:--",
                 avgSpeed: 0,
-                totalSteps: 0,
+                // totalSteps: 0,
                 lastRunDate: "No runs yet",
                 chartData: {
                     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -192,21 +192,22 @@ const StatisticsScreen = () => {
             avgPace = `${avgMinutes}:${avgSecs.toString().padStart(2, "0")}`;
         }
 
-        const totalSteps = runs.reduce((sum, run) => sum + (run.steps || 0), 0);
+        // const totalSteps = runs.reduce((sum, run) => sum + (run.steps || 0), 0); no need for now
 
         const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date("2025-04-01");
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
             d.setDate(d.getDate() - i);
             return d.toISOString().split("T")[0];
         }).reverse();
 
         const dailyDistances = last7Days.map((date) => {
             const dayRuns = runs.filter((run) => {
-                const runDate = new Date(run.createdAt)
-                    .toISOString()
-                    .split("T")[0];
-                return runDate === date;
+                const runDate = new Date(run.createdAt);
+                runDate.setHours(0, 0, 0, 0);
+                return runDate.toISOString().split("T")[0] === date;
             });
+
             return Number(
                 dayRuns
                     .reduce((sum, run) => sum + (run.distance || 0), 0)
@@ -219,7 +220,7 @@ const StatisticsScreen = () => {
             totalTime,
             avgPace,
             avgSpeed: Number(avgSpeed.toFixed(2)),
-            totalSteps,
+            // totalSteps,
             lastRunDate,
             chartData: {
                 labels: last7Days.map((date) => {
@@ -342,9 +343,6 @@ const StatisticsScreen = () => {
                     <Text style={styles.statValue}>
                         {statistics.avgSpeed} km/h
                     </Text>
-                    <Text style={styles.speedValue}>
-                        {statistics.avgPace} min/km
-                    </Text>
                 </View>
                 <View style={styles.statBox}>
                     <MaterialCommunityIcons
@@ -352,10 +350,8 @@ const StatisticsScreen = () => {
                         size={24}
                         color="#FF4B4B"
                     />
-                    <Text style={styles.statTitle}>Total Steps</Text>
-                    <Text style={styles.statValue}>
-                        {statistics.totalSteps}
-                    </Text>
+                    <Text style={styles.statTitle}>Avg. Pace</Text>
+                    <Text style={styles.statValue}>{statistics.avgPace}</Text>
                 </View>
             </View>
 

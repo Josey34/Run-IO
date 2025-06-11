@@ -17,11 +17,7 @@ import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
 import WorkoutCompleteModal from "../components/WorkoutCompleteModal";
 import { haversineDistance } from "../utils/distanceCalculations";
-import {
-    formatDuration,
-    formatPace,
-    paceToSpeed,
-} from "../utils/paceCalculations";
+import { formatDuration, formatPace } from "../utils/paceCalculations";
 import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
 
 const MIN_DISTANCE_FOR_PACE = 0.001; // 1 meter in kilometers
@@ -34,8 +30,8 @@ const PACE_AVERAGE_WINDOW = 5; // Number of readings for rolling average
 const UPDATE_INTERVAL = 5000; // Update average pace every 5 seconds
 
 interface WorkoutStats {
-    currentPace: number;
-    averagePace: number;
+    currentSpeed: number;
+    averageSpeed: number;
     distance: number;
     duration: number;
     steps: number;
@@ -50,30 +46,21 @@ interface RouteCoordinate {
     timestamp?: string;
 }
 
-const calculatePace = (timeInSeconds: number, distanceInKm: number): number => {
+const calculateSpeed = (
+    timeInSeconds: number,
+    distanceInKm: number
+): number => {
     if (distanceInKm < MIN_DISTANCE_FOR_PACE || timeInSeconds === 0) return 0;
-
-    const paceMinKm = timeInSeconds / 60 / distanceInKm;
-
-    if (paceMinKm >= MIN_VALID_PACE && paceMinKm <= MAX_VALID_PACE) {
-        return paceMinKm;
-    }
-    return 0;
+    return (distanceInKm / timeInSeconds) * 3600;
 };
 
-const calculateAveragePace = (
+const calculateAverageSpeed = (
     totalDistanceKm: number,
     totalTimeSeconds: number
 ): number => {
     if (totalDistanceKm < MIN_TOTAL_DISTANCE || totalTimeSeconds === 0)
         return 0;
-
-    const avgPace = totalTimeSeconds / 60 / totalDistanceKm;
-
-    if (avgPace >= MIN_VALID_PACE && avgPace <= MAX_VALID_PACE) {
-        return avgPace;
-    }
-    return 0;
+    return (totalDistanceKm / totalTimeSeconds) * 3600;
 };
 
 const RunningScreen = () => {
@@ -82,8 +69,8 @@ const RunningScreen = () => {
     const [location, setLocation] =
         useState<Location.LocationObjectCoords | null>(null);
     const [workoutStats, setWorkoutStats] = useState<WorkoutStats>({
-        currentPace: 0,
-        averagePace: 0,
+        currentSpeed: 0,
+        averageSpeed: 0,
         distance: 0,
         duration: 0,
         steps: 0,
@@ -143,10 +130,10 @@ const RunningScreen = () => {
         const totalDuration = (currentTime - startTimeRef.current) / 1000;
 
         if (newDistance >= MIN_DISTANCE_FOR_PACE && newDistance < 0.1) {
-            const currentPace = calculatePace(timeElapsed, newDistance);
+            const currentSpeed = calculateSpeed(timeElapsed, newDistance);
 
-            if (currentPace > 0) {
-                speedReadings.current.push(currentPace);
+            if (currentSpeed > 0) {
+                speedReadings.current.push(currentSpeed);
                 if (speedReadings.current.length > PACE_AVERAGE_WINDOW) {
                     speedReadings.current.shift();
                 }
@@ -154,7 +141,7 @@ const RunningScreen = () => {
 
             setWorkoutStats((prev) => {
                 const updatedDistance = prev.distance + newDistance;
-                const smoothCurrentPace =
+                const smoothCurrentSpeed =
                     speedReadings.current.length > 0
                         ? speedReadings.current.reduce((a, b) => a + b) /
                           speedReadings.current.length
@@ -162,16 +149,16 @@ const RunningScreen = () => {
 
                 const shouldUpdateAverage =
                     currentTime - prev.lastAverageUpdate >= UPDATE_INTERVAL;
-                const averagePace = shouldUpdateAverage
-                    ? calculateAveragePace(updatedDistance, totalDuration)
-                    : prev.averagePace;
+                const averageSpeed = shouldUpdateAverage
+                    ? calculateAverageSpeed(updatedDistance, totalDuration)
+                    : prev.averageSpeed;
 
                 return {
                     ...prev,
-                    currentPace: smoothCurrentPace,
-                    averagePace: shouldUpdateAverage
-                        ? averagePace
-                        : prev.averagePace,
+                    currentSpeed: Number(smoothCurrentSpeed.toFixed(1)),
+                    averageSpeed: shouldUpdateAverage
+                        ? Number(averageSpeed.toFixed(1))
+                        : prev.averageSpeed,
                     distance: updatedDistance,
                     duration: totalDuration,
                     lastAverageUpdate: shouldUpdateAverage
@@ -302,12 +289,12 @@ const RunningScreen = () => {
             const timeElapsed = formatDuration(workoutStats.duration);
 
             const currentSpeed =
-                workoutStats.currentPace > 0
-                    ? 60 / workoutStats.currentPace
+                workoutStats.currentSpeed > 0
+                    ? 60 / workoutStats.currentSpeed
                     : 0;
             const averageSpeed =
-                workoutStats.averagePace > 0
-                    ? 60 / workoutStats.averagePace
+                workoutStats.averageSpeed > 0
+                    ? 60 / workoutStats.averageSpeed
                     : 0;
 
             const workoutData = {
@@ -317,11 +304,12 @@ const RunningScreen = () => {
                 duration: formatDuration(workoutStats.duration),
 
                 distance: Number(workoutStats.distance.toFixed(2)),
-                currentSpeed: Number(currentSpeed.toFixed(2)),
+                speed: Number(currentSpeed.toFixed(2)),
                 averageSpeed: Number(averageSpeed.toFixed(2)),
+                currentSpeed: workoutStats.currentSpeed,
 
-                currentPace: formatPace(workoutStats.currentPace),
-                averagePace: formatPace(workoutStats.averagePace),
+                currentPace: formatPace(workoutStats.currentSpeed),
+                averagePace: formatPace(workoutStats.averageSpeed),
 
                 steps: workoutStats.steps,
                 route: routeCoordinates.map((coord) => ({
@@ -439,21 +427,17 @@ const RunningScreen = () => {
                 </View>
                 <View style={styles.statRow}>
                     <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>CURRENT PACE</Text>
+                        <Text style={styles.statLabel}>CURRENT SPEED</Text>
                         <Text style={styles.statValue}>
-                            {formatPace(workoutStats.currentPace)}
-                            <Text style={styles.statUnit}> /km</Text>
-                        </Text>
-                        <Text style={styles.speedValue}>
-                            {paceToSpeed(workoutStats.currentPace)}
-                            <Text style={styles.speedUnit}> km/h</Text>
+                            {workoutStats.currentSpeed.toFixed(1)}
+                            <Text style={styles.statUnit}> km/h</Text>
                         </Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>AVG PACE</Text>
+                        <Text style={styles.statLabel}>AVG SPEED</Text>
                         <Text style={styles.statValue}>
-                            {formatPace(workoutStats.averagePace)}
-                            <Text style={styles.statUnit}> /km</Text>
+                            {workoutStats.averageSpeed.toFixed(1)}
+                            <Text style={styles.statUnit}> km/h</Text>
                         </Text>
                         {workoutStats.distance < MIN_TOTAL_DISTANCE && (
                             <Text style={styles.paceNote}>

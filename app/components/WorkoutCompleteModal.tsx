@@ -29,7 +29,7 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
 }) => {
     return (
         <Modal
-            animationType="slide"
+            animationType="fade"
             transparent={true}
             visible={visible}
             onRequestClose={onClose}
@@ -81,12 +81,12 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
                                 {workoutData.averagePace} /km
                             </Text>
                         </View>
-                        <View style={styles.statRow}>
+                        {/* <View style={styles.statRow}>
                             <Text style={styles.statLabel}>Steps:</Text>
                             <Text style={styles.statValue}>
                                 {workoutData.steps}
                             </Text>
-                        </View>
+                        </View> */}
                     </View>
 
                     <TouchableOpacity
