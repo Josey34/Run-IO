@@ -1,6 +1,7 @@
 import { FontAwesome5 } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
+    Animated,
     Dimensions,
     Modal,
     StyleSheet,
@@ -18,6 +19,7 @@ interface WorkoutCompleteModalProps {
         distance: number;
         duration: string;
         averagePace: string;
+        averageSpeed: number;
         steps: number;
     };
 }
@@ -27,6 +29,49 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
     onClose,
     workoutData,
 }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+    const scaleAnim = useRef(new Animated.Value(0.3)).current;
+    const statsAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (visible) {
+            fadeAnim.setValue(0);
+            slideAnim.setValue(50);
+            scaleAnim.setValue(0.3);
+            statsAnim.setValue(0);
+
+            Animated.sequence([
+                Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                        toValue: 1,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }),
+                    Animated.spring(scaleAnim, {
+                        toValue: 1,
+                        tension: 60,
+                        friction: 7,
+                        useNativeDriver: true,
+                    }),
+                ]),
+                Animated.stagger(100, [
+                    Animated.spring(slideAnim, {
+                        toValue: 0,
+                        tension: 60,
+                        friction: 8,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(statsAnim, {
+                        toValue: 1,
+                        duration: 400,
+                        useNativeDriver: true,
+                    }),
+                ]),
+            ]).start();
+        }
+    }, [visible]);
+
     return (
         <Modal
             animationType="fade"
@@ -34,14 +79,39 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
+            <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
+                <Animated.View
+                    style={[
+                        styles.modalContent,
+                        {
+                            transform: [{ scale: scaleAnim }],
+                        },
+                    ]}
+                >
                     <View style={styles.modalHeader}>
-                        <FontAwesome5 name="trophy" size={40} color="#FFD700" />
+                        <Animated.View
+                            style={{
+                                transform: [{ scale: scaleAnim }],
+                            }}
+                        >
+                            <FontAwesome5
+                                name="trophy"
+                                size={40}
+                                color="#FFD700"
+                            />
+                        </Animated.View>
                         <Text style={styles.headerText}>Workout Complete!</Text>
                     </View>
 
-                    <View style={styles.statsContainer}>
+                    <Animated.View
+                        style={[
+                            styles.statsContainer,
+                            {
+                                transform: [{ translateY: slideAnim }],
+                                opacity: statsAnim,
+                            },
+                        ]}
+                    >
                         <View style={styles.timeContainer}>
                             <View style={styles.timeBlock}>
                                 <Text style={styles.timeLabel}>Started</Text>
@@ -63,40 +133,84 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
                             </View>
                         </View>
 
-                        <View style={styles.statRow}>
-                            <Text style={styles.statLabel}>Distance:</Text>
-                            <Text style={styles.statValue}>
-                                {workoutData.distance.toFixed(2)} km
-                            </Text>
+                        <View style={styles.statsGrid}>
+                            {[
+                                {
+                                    icon: "route",
+                                    value: `${workoutData.distance.toFixed(
+                                        2
+                                    )} km`,
+                                    label: "Distance",
+                                },
+                                {
+                                    icon: "clock",
+                                    value: workoutData.duration,
+                                    label: "Duration",
+                                },
+                                {
+                                    icon: "tachometer-alt",
+                                    value: `${workoutData.averageSpeed.toFixed(
+                                        1
+                                    )} km/h`,
+                                    label: "Avg Speed",
+                                },
+                                {
+                                    icon: "running",
+                                    value: `${workoutData.averagePace} min/km`,
+                                    label: "Avg Pace",
+                                },
+                            ].map((stat, index) => (
+                                <Animated.View
+                                    key={stat.label}
+                                    style={[
+                                        styles.statItem,
+                                        {
+                                            transform: [
+                                                {
+                                                    translateY:
+                                                        statsAnim.interpolate({
+                                                            inputRange: [0, 1],
+                                                            outputRange: [
+                                                                50, 0,
+                                                            ],
+                                                        }),
+                                                },
+                                            ],
+                                            opacity: statsAnim,
+                                        },
+                                    ]}
+                                >
+                                    <FontAwesome5
+                                        name={stat.icon}
+                                        size={24}
+                                        color="#00B04D"
+                                    />
+                                    <Text style={styles.statValue}>
+                                        {stat.value}
+                                    </Text>
+                                    <Text style={styles.statLabel}>
+                                        {stat.label}
+                                    </Text>
+                                </Animated.View>
+                            ))}
                         </View>
-                        <View style={styles.statRow}>
-                            <Text style={styles.statLabel}>Duration:</Text>
-                            <Text style={styles.statValue}>
-                                {workoutData.duration}
-                            </Text>
-                        </View>
-                        <View style={styles.statRow}>
-                            <Text style={styles.statLabel}>Avg Pace:</Text>
-                            <Text style={styles.statValue}>
-                                {workoutData.averagePace} /km
-                            </Text>
-                        </View>
-                        {/* <View style={styles.statRow}>
-                            <Text style={styles.statLabel}>Steps:</Text>
-                            <Text style={styles.statValue}>
-                                {workoutData.steps}
-                            </Text>
-                        </View> */}
-                    </View>
+                    </Animated.View>
 
-                    <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={onClose}
+                    <Animated.View
+                        style={{
+                            opacity: statsAnim,
+                            transform: [{ translateY: slideAnim }],
+                        }}
                     >
-                        <Text style={styles.closeButtonText}>Close</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={onClose}
+                        >
+                            <Text style={styles.closeButtonText}>Close</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                </Animated.View>
+            </Animated.View>
         </Modal>
     );
 };
@@ -159,21 +273,30 @@ const styles = StyleSheet.create({
     timeArrow: {
         marginHorizontal: 15,
     },
-    statRow: {
+    statsGrid: {
         flexDirection: "row",
+        flexWrap: "wrap",
         justifyContent: "space-between",
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: "#333",
+        paddingVertical: 15,
+    },
+    statItem: {
+        width: "48%",
+        backgroundColor: "#2A2A2A",
+        borderRadius: 12,
+        padding: 15,
+        alignItems: "center",
+        marginBottom: 15,
     },
     statLabel: {
-        fontSize: 16,
+        fontSize: 14,
         color: "#888",
+        marginTop: 8,
     },
     statValue: {
-        fontSize: 16,
+        fontSize: 18,
         color: "#FFF",
         fontWeight: "600",
+        marginTop: 8,
     },
     closeButton: {
         backgroundColor: "#00B04D",

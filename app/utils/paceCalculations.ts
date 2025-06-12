@@ -6,8 +6,16 @@ export const paceToSpeed = (paceInSecondsPerKm: number): string => {
 
 export const formatPace = (paceInMinKm: number): string => {
     if (paceInMinKm === 0 || !isFinite(paceInMinKm)) return "--:--";
-    const minutes = Math.floor(paceInMinKm);
-    const seconds = Math.floor((paceInMinKm - minutes) * 60);
+
+    const pace = Math.abs(paceInMinKm);
+
+    const minutes = Math.floor(pace);
+    const seconds = Math.round((pace - minutes) * 60);
+
+    if (seconds === 60) {
+        return `${minutes + 1}:00`;
+    }
+
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
