@@ -6,6 +6,7 @@
     "start": "npx expo start",
     "android": "npx expo start --android",
     "build": "eas build --platform android --profile preview",
+    "build-local": "cd android && gradlew clean && gradlew assembleRelease",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
     "test": "jest --watchAll"

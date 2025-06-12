@@ -129,7 +129,7 @@ const getIconName = (routeName: string, isFocused: boolean): string => {
     const icons: { [key: string]: string } = {
         index: isFocused ? "home-sharp" : "home-outline",
         statistics_screen: isFocused ? "stats-chart" : "stats-chart-outline",
-        running_screen: isFocused ? "fitness" : "fitness-outline",
+        running_screen: isFocused ? "walk" : "walk-outline",
         challenge_screen: isFocused ? "trophy" : "trophy-outline",
     };
     return icons[routeName];

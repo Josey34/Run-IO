@@ -285,7 +285,7 @@ const StatisticsScreen = () => {
                 <Text style={styles.chartTitle}>Last 7 Days Distance (km)</Text>
                 <LineChart
                     data={statistics.chartData}
-                    width={350}
+                    width={300}
                     height={200}
                     chartConfig={{
                         backgroundColor: "#1E2923",
@@ -351,7 +351,9 @@ const StatisticsScreen = () => {
                         color="#FF4B4B"
                     />
                     <Text style={styles.statTitle}>Avg. Pace</Text>
-                    <Text style={styles.statValue}>{statistics.avgPace}</Text>
+                    <Text style={styles.statValue}>
+                        {statistics.avgPace} min/km
+                    </Text>
                 </View>
             </View>
 

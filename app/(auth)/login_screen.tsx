@@ -67,7 +67,11 @@ export default function LoginScreen() {
                         Register Now
                     </Text>
                 </Text>
-                <CustomButton title="Login" onPress={handleLogin} />
+                <CustomButton
+                    title="Login"
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                />
             </BlurView>
         </ImageBackground>
     );

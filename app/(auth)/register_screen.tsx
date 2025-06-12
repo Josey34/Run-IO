@@ -12,13 +12,19 @@ export default function RegisterScreen() {
     const [username, setUsername] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleRegister = async () => {
+        if (isLoading) return;
+
+        setIsLoading(true);
         try {
             await registerUser(email, password);
             router.push("/login_screen");
         } catch (error: any) {
             ErrorModalEmitter.emit("SHOW_ERROR", error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -54,7 +60,11 @@ export default function RegisterScreen() {
                     onChangeText={setPassword}
                 />
 
-                <CustomButton title="Register" onPress={handleRegister} />
+                <CustomButton
+                    title="Register"
+                    onPress={handleRegister}
+                    disabled={isLoading}
+                />
             </BlurView>
         </ImageBackground>
     );
