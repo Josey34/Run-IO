@@ -185,18 +185,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: "#000",
+        backgroundColor: "#7F8CAA",
     },
     wrapper: {
         height: "100%",
-        backgroundColor: "#2d2d2d",
+        backgroundColor: "#333446",
         padding: 30,
         borderRadius: 15,
     },
     title: {
         marginTop: 80,
         fontSize: 24,
-        color: "#fff",
+        color: "#EAEFEF",
         marginBottom: 10,
         textAlign: "center",
         fontWeight: "bold",
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
         width: "100%",
         padding: 10,
         borderRadius: 5,
-        backgroundColor: "#fff",
+        backgroundColor: "#B8CFCE",
         marginBottom: 15,
     },
     inputText: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         margin: 20,
-        backgroundColor: "white",
+        backgroundColor: "#EAEFEF",
         borderRadius: 20,
         padding: 35,
         alignItems: "center",
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     buttonClose: {
-        backgroundColor: "#2196F3",
+        backgroundColor: "#7F8CAA",
     },
     textStyle: {
         color: "white",

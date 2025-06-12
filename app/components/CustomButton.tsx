@@ -51,7 +51,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 
 const styles = StyleSheet.create({
     button: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#7F8CAA",
         height: 51,
         padding: 10,
         borderRadius: 15,
@@ -61,16 +61,16 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     buttonDisabled: {
-        backgroundColor: "#CCCCCC",
+        backgroundColor: "#B8CFCE",
         opacity: 0.7,
     },
     buttonText: {
-        color: "#000000",
+        color: "#EAEFEF",
         fontSize: 16,
         fontWeight: "bold",
     },
     buttonTextDisabled: {
-        color: "#666666",
+        color: "#333446",
     },
 });
 

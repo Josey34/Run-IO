@@ -366,7 +366,7 @@ const StatisticsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
+        backgroundColor: "#333446",
         padding: 20,
     },
     bottomPadding: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     errorText: {
-        color: "#FF4B4B",
+        color: "#1E2923",
         fontSize: 20,
         fontWeight: "bold",
         marginTop: 16,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 15,
-        backgroundColor: "#333",
+        backgroundColor: "#7F8CAA",
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -444,24 +444,24 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
     lastRunContainer: {
-        backgroundColor: "#1E2923",
+        backgroundColor: "#B8CFCE",
         borderRadius: 16,
         padding: 12,
         marginBottom: 15,
     },
     lastRunText: {
-        color: "#fff",
+        color: "#888",
         fontSize: 14,
     },
     chartContainer: {
-        backgroundColor: "#1E2923",
+        backgroundColor: "#B8CFCE",
         borderRadius: 16,
         padding: 15,
         alignItems: "center",
         marginBottom: 20,
     },
     chartTitle: {
-        color: "#fff",
+        color: "#888",
         fontSize: 16,
         fontWeight: "bold",
         marginBottom: 10,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     statBox: {
-        backgroundColor: "#1E2923",
+        backgroundColor: "#EAEFEF",
         borderRadius: 16,
         padding: 15,
         width: "48%",
@@ -482,14 +482,14 @@ const styles = StyleSheet.create({
     statTitle: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#888",
+        color: "#1E2923",
         marginTop: 8,
         marginBottom: 4,
     },
     statValue: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#fff",
+        color: "#888",
     },
     speedValue: {
         fontSize: 14,

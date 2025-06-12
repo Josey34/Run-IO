@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 const globalStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
+        backgroundColor: "#333446",
         padding: 20,
     },
     header: {
@@ -11,18 +11,18 @@ const globalStyles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 15,
-        backgroundColor: "#333",
+        backgroundColor: "#7F8CAA",
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
     },
     welcome: {
         fontSize: 24,
-        color: "#fff",
+        color: "#EAEFEF",
         fontWeight: "bold",
     },
     card: {
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         borderRadius: 10,
         padding: 15,
         marginBottom: 20,
@@ -35,7 +35,7 @@ const globalStyles = StyleSheet.create({
         fontSize: 16,
     },
     runContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: "#B8CFCE",
         borderRadius: 10,
         paddingLeft: 40,
         marginBottom: 20,
@@ -46,12 +46,12 @@ const globalStyles = StyleSheet.create({
     runTitle: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#333",
+        color: "#333446",
     },
     runDistance: {
         fontSize: 22,
         fontWeight: "bold",
-        color: "#333",
+        color: "#333446",
         marginBottom: 10,
     },
     mapContainer: {
@@ -61,7 +61,7 @@ const globalStyles = StyleSheet.create({
         overflow: "hidden",
         borderWidth: 1,
         borderColor: "#dcdcdc",
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         alignItems: 'center',
     },
     mapView: {
@@ -80,7 +80,7 @@ const globalStyles = StyleSheet.create({
         marginBottom: 20,
     },
     weatherContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         borderRadius: 15,
         padding: 20,
         alignItems: "center",
@@ -95,7 +95,7 @@ const globalStyles = StyleSheet.create({
     weatherTemp: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#000",
+        color: "#333446",
     },
     weatherDate: {
         fontSize: 14,
@@ -120,7 +120,7 @@ const globalStyles = StyleSheet.create({
         color: "#666",
     },
     comingSoon: {
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         borderRadius: 10,
         flex: 1,
         justifyContent: "center",
@@ -133,7 +133,7 @@ const globalStyles = StyleSheet.create({
         fontWeight: "bold",
     },
     newsContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         borderRadius: 10,
         padding: 15,
         marginBottom: 20,

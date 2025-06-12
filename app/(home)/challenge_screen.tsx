@@ -11,9 +11,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import CustomModal from "../components/CustomModal";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
+import CustomModal from "../components/CustomModal";
 
 interface Challenge {
     id: number;
@@ -287,7 +287,7 @@ const ChallengeScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#1A1A1A",
+        backgroundColor: "#333446",
         paddingHorizontal: 20,
         paddingTop: 20,
     },
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#333",
+        backgroundColor: "#7F8CAA",
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
     progressBox: {
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         padding: 15,
         borderRadius: 10,
         marginVertical: 15,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-around",
-        backgroundColor: "#333",
+        backgroundColor: "#B8CFCE",
         borderRadius: 25,
         width: 300,
         height: 50,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     },
     filterIndicator: {
         position: "absolute",
-        backgroundColor: "#007bff",
+        backgroundColor: "#7F8CAA",
         height: 40,
         width: 100,
         borderRadius: 20,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     challengeItem: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
+        backgroundColor: "#EAEFEF",
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     iconContainer: {
-        backgroundColor: "#007bff",
+        backgroundColor: "#7F8CAA",
         width: 40,
         height: 40,
         borderRadius: 20,

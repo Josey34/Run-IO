@@ -466,7 +466,7 @@ const RunningScreen = () => {
             <TouchableOpacity
                 style={[
                     styles.fab,
-                    { backgroundColor: isTracking ? "#FF4B4B" : "#00B04D" },
+                    { backgroundColor: isTracking ? "#FF4B4B" : "#7F8CAA" },
                 ]}
                 onPress={() => (isTracking ? stopTracking() : startTracking())}
             >
@@ -489,7 +489,7 @@ const RunningScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
+        backgroundColor: "#333446",
     },
     map: {
         flex: 1,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
         top: 50,
         left: 16,
         right: 16,
-        backgroundColor: "rgba(52, 73, 94, 0.95)",
+        backgroundColor: "#7F8CAA",
         borderRadius: 15,
         padding: 15,
     },
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        backgroundColor: "#B8CFCE",
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 4,
