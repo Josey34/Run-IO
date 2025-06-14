@@ -1,8 +1,9 @@
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Animated,
     Image,
     Linking,
     NativeScrollEvent,
@@ -49,7 +50,43 @@ const HomeScreen = () => {
     const { fetchRun } = useFetch<Run[]>("");
     const [todayDistance, setTodayDistance] = useState(0);
 
+    // Add animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+    const weatherAnim = useRef(new Animated.Value(0)).current;
+    const newsAnim = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
+        // Sequence of animations
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.sequence([
+                Animated.delay(400),
+                Animated.timing(weatherAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(800),
+                Animated.timing(newsAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+
         const getLocation = async () => {
             try {
                 const { status } =
@@ -111,10 +148,49 @@ const HomeScreen = () => {
         }
     };
 
+    const resetAndPlayAnimations = () => {
+        // Reset all animations to initial values
+        fadeAnim.setValue(0);
+        slideAnim.setValue(50);
+        weatherAnim.setValue(0);
+        newsAnim.setValue(0);
+
+        // Play animations again
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.sequence([
+                Animated.delay(400),
+                Animated.timing(weatherAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(800),
+                Animated.timing(newsAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+    };
+
     const onRefresh = async () => {
         setRefreshing(true);
         try {
             await refetch();
+            resetAndPlayAnimations();
 
             if (user?.uid) {
                 const runs = await fetchRun(user.uid);
@@ -167,19 +243,42 @@ const HomeScreen = () => {
                 onScroll={handleScroll}
                 scrollEventThrottle={400}
             >
-                <View style={globalStyles.header}>
+                <Animated.View
+                    style={[
+                        globalStyles.header,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        },
+                    ]}
+                >
                     <Text style={globalStyles.welcome}>Welcome</Text>
-                </View>
+                </Animated.View>
 
-                <View style={globalStyles.card}>
+                <Animated.View
+                    style={[
+                        globalStyles.card,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        },
+                    ]}
+                >
                     <Text style={globalStyles.greeting}>Hi, User 👋</Text>
                     <Text style={globalStyles.subGreeting}>
                         Let's see your progress
                     </Text>
-                </View>
+                </Animated.View>
 
-                {/* Running Section */}
-                <View style={globalStyles.runContainer}>
+                <Animated.View
+                    style={[
+                        globalStyles.runContainer,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ translateY: slideAnim }],
+                        },
+                    ]}
+                >
                     <View>
                         <Text style={globalStyles.runTitle}>Today's Run</Text>
                         <Text style={globalStyles.runDistance}>
@@ -209,8 +308,13 @@ const HomeScreen = () => {
                     ) : (
                         <ActivityIndicator size="large" color="#1e90ff" />
                     )}
-                </View>
-                <View style={globalStyles.weatherComingSoonContainer}>
+                </Animated.View>
+                <Animated.View
+                    style={[
+                        globalStyles.weatherComingSoonContainer,
+                        { opacity: weatherAnim },
+                    ]}
+                >
                     {/* Weather Section */}
                     <View style={globalStyles.weatherContainer}>
                         {loading ? (
@@ -259,9 +363,11 @@ const HomeScreen = () => {
                     <View style={globalStyles.comingSoon}>
                         <Text>Coming Soon</Text>
                     </View>
-                </View>
+                </Animated.View>
 
-                <View style={globalStyles.newsContainer}>
+                <Animated.View
+                    style={[globalStyles.newsContainer, { opacity: newsAnim }]}
+                >
                     <Text style={globalStyles.newsTitle}>
                         Latest Sports News
                     </Text>
@@ -308,21 +414,23 @@ const HomeScreen = () => {
                             ))
                         )}
                     </ScrollView>
-                </View>
+                </Animated.View>
 
-                {/* Logout Button */}
-                <CustomButton
-                    title="Logout"
-                    onPress={handleLogout}
-                    style={{ backgroundColor: "#FF0000" }}
-                />
-                {/* Navigation Button */}
-                <TouchableOpacity
-                    style={globalStyles.button}
-                    onPress={() => router.push("/(auth)/form_data_screen")}
-                >
-                    <Text style={globalStyles.buttonText}>Go Form Data</Text>
-                </TouchableOpacity>
+                <Animated.View style={{ opacity: newsAnim }}>
+                    <CustomButton
+                        title="Logout"
+                        onPress={handleLogout}
+                        style={{ backgroundColor: "#FF0000" }}
+                    />
+                    <TouchableOpacity
+                        style={globalStyles.button}
+                        onPress={() => router.push("/(auth)/form_data_screen")}
+                    >
+                        <Text style={globalStyles.buttonText}>
+                            Go Form Data
+                        </Text>
+                    </TouchableOpacity>
+                </Animated.View>
             </ScrollView>
         </View>
     );

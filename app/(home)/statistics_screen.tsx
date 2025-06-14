@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Animated,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -62,6 +63,10 @@ const EmptyState = () => (
 );
 
 const StatisticsScreen = () => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+    const chartAnim = useRef(new Animated.Value(0)).current;
+    const statsAnim = useRef(new Animated.Value(0)).current;
     const [statistics, setStatistics] = useState<StatisticsData | null>(null);
     const { user } = useAuth();
     const { loading, error, fetchRun } = useFetch<Run[]>("");
@@ -86,9 +91,48 @@ const StatisticsScreen = () => {
         }
     };
 
+    const resetAndStartAnimations = () => {
+        // Reset all animations
+        fadeAnim.setValue(0);
+        slideAnim.setValue(50);
+        chartAnim.setValue(0);
+        statsAnim.setValue(0);
+
+        // Play animations in sequence
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.sequence([
+                Animated.delay(400),
+                Animated.timing(chartAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(800),
+                Animated.timing(statsAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+    };
+
     const onRefresh = async () => {
         setRefreshing(true);
         await loadRuns();
+        resetAndStartAnimations();
         setRefreshing(false);
     };
 
@@ -112,6 +156,7 @@ const StatisticsScreen = () => {
     useEffect(() => {
         loginError();
         loadRuns();
+        resetAndStartAnimations();
     }, [user]);
 
     const calculateStatistics = (runs: Run[]): StatisticsData => {
@@ -267,21 +312,39 @@ const StatisticsScreen = () => {
             }
         >
             {/* Header */}
-            <View style={styles.header}>
+            <Animated.View
+                style={[
+                    styles.header,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    },
+                ]}
+            >
                 <View>
                     <Text style={styles.title}>Statistics</Text>
                 </View>
-            </View>
+            </Animated.View>
 
             {/* Last Run Info */}
-            <View style={styles.lastRunContainer}>
+            <Animated.View
+                style={[
+                    styles.lastRunContainer,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    },
+                ]}
+            >
                 <Text style={styles.lastRunText}>
                     Last Run: {statistics.lastRunDate}
                 </Text>
-            </View>
+            </Animated.View>
 
             {/* Chart */}
-            <View style={styles.chartContainer}>
+            <Animated.View
+                style={[styles.chartContainer, { opacity: chartAnim }]}
+            >
                 <Text style={styles.chartTitle}>Last 7 Days Distance (km)</Text>
                 <LineChart
                     data={statistics.chartData}
@@ -309,10 +372,12 @@ const StatisticsScreen = () => {
                     }}
                     bezier
                 />
-            </View>
+            </Animated.View>
 
             {/* Statistics Boxes */}
-            <View style={styles.statsContainer}>
+            <Animated.View
+                style={[styles.statsContainer, { opacity: statsAnim }]}
+            >
                 <View style={styles.statBox}>
                     <MaterialCommunityIcons
                         name="map-marker-distance"
@@ -355,7 +420,7 @@ const StatisticsScreen = () => {
                         {statistics.avgPace} min/km
                     </Text>
                 </View>
-            </View>
+            </Animated.View>
 
             {/* Add some bottom padding for better scrolling */}
             <View style={styles.bottomPadding} />

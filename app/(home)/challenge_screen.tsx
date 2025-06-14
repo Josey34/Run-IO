@@ -6,6 +6,7 @@ import {
     Animated,
     Easing,
     FlatList,
+    RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -62,17 +63,82 @@ const ChallengeScreen = () => {
             : !challenge.completed;
     });
 
+    // Add new animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const slideAnim = useRef(new Animated.Value(-100)).current;
+    const bounceAnim = useRef(new Animated.Value(0)).current;
+    const refreshRotate = useRef(new Animated.Value(0)).current;
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+
+    // Animation setup
     useEffect(() => {
         fetchFromBackend();
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.spring(bounceAnim, {
+                toValue: 1,
+                friction: 3,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
 
-        const index = filters.indexOf(filter);
-        Animated.timing(translateX, {
-            toValue: index * 100,
-            duration: 300,
-            easing: Easing.inOut(Easing.ease),
+    const buttonPressAnimation = () => {
+        Animated.sequence([
+            Animated.timing(scaleAnim, {
+                toValue: 0.9,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
+    const startRefreshAnimation = () => {
+        refreshRotate.setValue(0);
+        Animated.timing(refreshRotate, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.linear,
             useNativeDriver: true,
         }).start();
-    }, [filter]);
+    };
+
+    const startRotationAnimation = () => {
+        rotateAnim.setValue(0);
+        Animated.loop(
+            Animated.timing(rotateAnim, {
+                toValue: 1,
+                duration: 1000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
+    };
+
+    const spin = refreshRotate.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["0deg", "360deg"],
+    });
+
+    const rotation = rotateAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["0deg", "360deg"],
+    });
 
     const showModal = (message: string, confirmAction?: () => void) => {
         setModalMessage(message);
@@ -119,12 +185,17 @@ const ChallengeScreen = () => {
     return (
         <View style={styles.container}>
             {/* Header Section */}
-            <View style={styles.header}>
+            <Animated.View
+                style={[
+                    styles.header,
+                    { transform: [{ translateY: slideAnim }] },
+                ]}
+            >
                 <Text style={styles.headerText}>Challenges</Text>
-            </View>
+            </Animated.View>
 
             {/* Progress Box with Loading State */}
-            <View style={styles.progressBox}>
+            <Animated.View style={[styles.progressBox, { opacity: fadeAnim }]}>
                 <Text style={styles.progressTitle}>Completed Challenges</Text>
                 <View style={styles.progressContent}>
                     {loading ? (
@@ -144,7 +215,7 @@ const ChallengeScreen = () => {
                     )}
                     <Ionicons name="fitness" size={28} color="black" />
                 </View>
-            </View>
+            </Animated.View>
 
             {/* Filter Buttons with Loading State */}
             <View style={styles.filterContainer}>
@@ -185,18 +256,42 @@ const ChallengeScreen = () => {
                 <FlatList
                     data={filteredChallenges}
                     keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
-                        <View
-                            style={{ flexDirection: "row", marginBottom: 20 }}
+                    renderItem={({ item, index }) => (
+                        <Animated.View
+                            style={[
+                                { flexDirection: "row", marginBottom: 20 },
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [
+                                        {
+                                            translateX: fadeAnim.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: [50, 0],
+                                            }),
+                                        },
+                                    ],
+                                },
+                            ]}
                         >
                             <View style={styles.challengeItem}>
-                                <View style={styles.iconContainer}>
+                                <Animated.View
+                                    style={[
+                                        styles.iconContainer,
+                                        {
+                                            transform: [
+                                                {
+                                                    scale: bounceAnim,
+                                                },
+                                            ],
+                                        },
+                                    ]}
+                                >
                                     <Ionicons
                                         name="fitness"
                                         size={20}
                                         color="#fff"
                                     />
-                                </View>
+                                </Animated.View>
                                 <View style={styles.challengeInfo}>
                                     <View style={styles.infoTop}>
                                         <Text style={styles.challengeType}>
@@ -219,14 +314,22 @@ const ChallengeScreen = () => {
                                     </View>
                                 </View>
                             </View>
-                            <View style={styles.actionButtons}>
+                            <Animated.View
+                                style={[
+                                    styles.actionButtons,
+                                    { transform: [{ scale: scaleAnim }] },
+                                ]}
+                            >
                                 <TouchableOpacity
                                     style={[
                                         styles.checkButton,
                                         updatingChallengeId === item.id &&
                                             styles.buttonDisabled,
                                     ]}
-                                    onPress={() => handleComplete(item.id)}
+                                    onPress={() => {
+                                        buttonPressAnimation();
+                                        handleComplete(item.id);
+                                    }}
                                     disabled={updatingChallengeId === item.id}
                                 >
                                     {updatingChallengeId === item.id ? (
@@ -248,7 +351,10 @@ const ChallengeScreen = () => {
                                         updatingChallengeId === item.id &&
                                             styles.buttonDisabled,
                                     ]}
-                                    onPress={() => handleCancel(item.id)}
+                                    onPress={() => {
+                                        buttonPressAnimation();
+                                        handleCancel(item.id);
+                                    }}
                                     disabled={updatingChallengeId === item.id}
                                 >
                                     {updatingChallengeId === item.id ? (
@@ -264,11 +370,29 @@ const ChallengeScreen = () => {
                                         />
                                     )}
                                 </TouchableOpacity>
-                            </View>
-                        </View>
+                            </Animated.View>
+                        </Animated.View>
                     )}
-                    onRefresh={() => fetchFromBackend(true)}
+                    onRefresh={() => {
+                        startRefreshAnimation();
+                        fetchFromBackend(true);
+                    }}
                     refreshing={refreshing}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={() => {
+                                startRotationAnimation();
+                                fetchFromBackend(true);
+                            }}
+                            tintColor="#007bff"
+                            colors={["#007bff"]}
+                            progressViewOffset={20}
+                            progressBackgroundColor="#fff"
+                            title="Refreshing..."
+                            titleColor="#007bff"
+                        />
+                    }
                 />
             )}
             <CustomModal

@@ -3,7 +3,13 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { Pedometer } from "expo-sensors";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    Animated,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { mapStyle } from "../../constants/Map";
 import { useAuth } from "../../hooks/useAuth";
@@ -100,6 +106,9 @@ const RunningScreen = () => {
     const speedReadings = useRef<number[]>([]);
 
     const router = useRouter();
+
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
 
     const updateWorkoutStats = (
         newLocation: Location.LocationObjectCoords,
@@ -349,6 +358,24 @@ const RunningScreen = () => {
         mapRef.current?.animateToRegion(newRegion, 1000);
     };
 
+    const animateStats = () => {
+        fadeAnim.setValue(0);
+        slideAnim.setValue(20);
+
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
     useEffect(() => {
         return () => {
             locationSubscription.current?.remove();
@@ -356,6 +383,14 @@ const RunningScreen = () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
     }, []);
+
+    useEffect(() => {
+        animateStats();
+    }, [
+        workoutStats.distance,
+        workoutStats.duration,
+        workoutStats.currentSpeed,
+    ]);
 
     return (
         <View style={styles.container}>
@@ -411,7 +446,15 @@ const RunningScreen = () => {
                 )}
             </MapView>
 
-            <View style={styles.statsContainer}>
+            <Animated.View
+                style={[
+                    styles.statsContainer,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    },
+                ]}
+            >
                 <View style={styles.statRow}>
                     <View style={styles.statItem}>
                         <View style={styles.iconContainer}>
@@ -461,7 +504,7 @@ const RunningScreen = () => {
                         <Text style={styles.statLabel}>Speed</Text>
                     </View>
                 </View>
-            </View>
+            </Animated.View>
 
             <TouchableOpacity
                 style={[
