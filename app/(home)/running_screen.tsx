@@ -79,6 +79,13 @@ const calculateCurrentPace = (
     return pace;
 };
 
+const simplifyRoute = (coordinates: RouteCoordinate[], targetPoints: number = 100): RouteCoordinate[] => {
+    if (coordinates.length <= targetPoints) return coordinates;
+    
+    const interval = Math.floor(coordinates.length / targetPoints);
+    return coordinates.filter((_, index) => index % interval === 0);
+};
+
 const RunningScreen = () => {
     const { user } = useAuth();
     const [isTracking, setIsTracking] = useState(false);
@@ -336,11 +343,14 @@ const RunningScreen = () => {
                     workoutStats.duration,
                     workoutStats.distance
                 ),
-                route: routeCoordinates.map((coord) => ({
-                    ...coord,
-                    timestamp: formatDateTime(
-                        new Date(coord.timestamp || Date.now())
-                    ),
+                route: simplifyRoute([
+                    routeCoordinates[0],
+                    ...simplifyRoute(routeCoordinates.slice(1, -1)),
+                    routeCoordinates[routeCoordinates.length - 1],
+                ]).map(coord => ({
+                    latitude: Number(coord.latitude.toFixed(6)),
+                    longitude: Number(coord.longitude.toFixed(6)),
+                    timestamp: formatDateTime(new Date(coord.timestamp || Date.now()))
                 })),
             };
             setWorkoutCompleteData(workoutData);
