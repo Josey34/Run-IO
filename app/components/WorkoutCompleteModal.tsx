@@ -20,7 +20,6 @@ interface WorkoutCompleteModalProps {
         duration: string;
         averagePace: string;
         averageSpeed: number;
-        steps: number;
     };
 }
 

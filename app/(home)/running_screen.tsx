@@ -17,7 +17,7 @@ import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
 import WorkoutCompleteModal from "../components/WorkoutCompleteModal";
 import { haversineDistance } from "../utils/distanceCalculations";
-import { formatDuration, calculatePaceFromTimeAndDistance } from "../utils/paceCalculations";
+import { calculatePaceFromTimeAndDistance, formatDuration } from "../utils/paceCalculations";
 import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
 
 const MIN_DISTANCE_FOR_PACE = 0.001; // 1 meter in kilometers
@@ -34,7 +34,6 @@ interface WorkoutStats {
     averageSpeed: number;
     distance: number;
     duration: number;
-    steps: number;
     startTime: string;
     rawStartTime: string;
     lastAverageUpdate: number;
@@ -68,10 +67,8 @@ const calculateCurrentPace = (
 ): string => {
     if (distanceInKm < MIN_DISTANCE_FOR_PACE) return "--:--";
     
-    // Use the direct calculation
     const pace = calculatePaceFromTimeAndDistance(timeInSeconds, distanceInKm);
     
-    // Validate the pace is reasonable
     const paceSeconds = timeInSeconds / distanceInKm;
     const paceMinutes = paceSeconds / 60;
     
@@ -92,7 +89,6 @@ const RunningScreen = () => {
         averageSpeed: 0,
         distance: 0,
         duration: 0,
-        steps: 0,
         startTime: formatLocalTime(new Date()),
         rawStartTime: new Date().toISOString(),
         lastAverageUpdate: Date.now(),
@@ -109,7 +105,6 @@ const RunningScreen = () => {
         duration: "",
         averagePace: "",
         averageSpeed: 0,
-        steps: 0,
     });
     const { saveRun, saving } = useFetch("");
 
@@ -341,8 +336,6 @@ const RunningScreen = () => {
                     workoutStats.duration,
                     workoutStats.distance
                 ),
-
-                steps: workoutStats.steps,
                 route: routeCoordinates.map((coord) => ({
                     ...coord,
                     timestamp: formatDateTime(
@@ -350,9 +343,6 @@ const RunningScreen = () => {
                     ),
                 })),
             };
-            
-            console.log(workoutData)
-
             setWorkoutCompleteData(workoutData);
             setShowCompleteModal(true);
 
