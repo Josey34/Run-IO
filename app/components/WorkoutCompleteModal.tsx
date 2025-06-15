@@ -144,7 +144,7 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
                                 },
                                 {
                                     icon: "clock",
-                                    value: workoutData.duration,
+                                    value: `${workoutData.duration}`,
                                     label: "Duration",
                                 },
                                 {

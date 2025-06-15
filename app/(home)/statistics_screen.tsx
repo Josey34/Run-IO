@@ -21,7 +21,7 @@ interface Run {
     averageSpeed: number;
     createdAt: string;
     currentPace: string;
-    currentSpeed: number;
+    speed: number;
     distance: number;
     duration: string;
     endTime: string;
@@ -213,31 +213,18 @@ const StatisticsScreen = () => {
         const totalTime = `${totalHours}h ${totalMinutes}m`;
 
         const validSpeeds = runs
-            .filter((run) => run.currentSpeed > 0)
-            .map((run) => run.currentSpeed);
-        const avgSpeed =
-            validSpeeds.length > 0
-                ? validSpeeds.reduce((sum, speed) => sum + speed, 0) /
-                  validSpeeds.length
-                : 0;
+            .filter(run => run.averageSpeed > 0)
+            .map(run => run.averageSpeed);
+        
+        const avgSpeed = validSpeeds.length > 0
+            ? Number((validSpeeds.reduce((sum, speed) => sum + speed, 0) / validSpeeds.length).toFixed(2))
+            : 0;
 
         const validPaces = runs
-            .filter((run) => run.currentPace && run.currentPace !== "--:--")
-            .map((run) => {
-                const [mins, secs] = run.currentPace.split(":").map(Number);
-                return mins * 60 + (secs || 0);
-            });
-
-        let avgPace = "--:--";
-        if (validPaces.length > 0) {
-            const avgSeconds =
-                validPaces.reduce((a, b) => a + b) / validPaces.length;
-            const avgMinutes = Math.floor(avgSeconds / 60);
-            const avgSecs = Math.round(avgSeconds % 60);
-            avgPace = `${avgMinutes}:${avgSecs.toString().padStart(2, "0")}`;
-        }
-
-        // const totalSteps = runs.reduce((sum, run) => sum + (run.steps || 0), 0); no need for now
+                .filter(run => run.averagePace !== "--:--")
+                .map(run => run.averagePace);
+    
+        const avgPace = validPaces.length > 0 ? validPaces[validPaces.length - 1] : "--:--";
 
         const last7Days = Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
@@ -264,7 +251,7 @@ const StatisticsScreen = () => {
             totalDistance: Number(totalDistance.toFixed(2)),
             totalTime,
             avgPace,
-            avgSpeed: Number(avgSpeed.toFixed(2)),
+            avgSpeed,
             // totalSteps,
             lastRunDate,
             chartData: {

@@ -93,6 +93,16 @@ const ChallengeScreen = () => {
         ]).start();
     }, []);
 
+    useEffect(() => {
+        const index = filters.indexOf(filter);
+        Animated.timing(translateX, {
+            toValue: index * 100,
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+        }).start();
+    }, [filter])
+
     const buttonPressAnimation = () => {
         Animated.sequence([
             Animated.timing(scaleAnim, {

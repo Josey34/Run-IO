@@ -17,7 +17,7 @@ import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
 import WorkoutCompleteModal from "../components/WorkoutCompleteModal";
 import { haversineDistance } from "../utils/distanceCalculations";
-import { formatDuration, formatPace } from "../utils/paceCalculations";
+import { formatDuration, calculatePaceFromTimeAndDistance } from "../utils/paceCalculations";
 import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
 
 const MIN_DISTANCE_FOR_PACE = 0.001; // 1 meter in kilometers
@@ -55,12 +55,31 @@ const calculateSpeed = (
 };
 
 const calculateAverageSpeed = (
-    totalDistanceKm: number,
-    totalTimeSeconds: number
+    distanceKm: number,
+    timeSeconds: number
 ): number => {
-    if (totalDistanceKm < MIN_TOTAL_DISTANCE || totalTimeSeconds === 0)
-        return 0;
-    return (totalDistanceKm / totalTimeSeconds) * 3600;
+    if (!distanceKm || timeSeconds === 0) return 0;
+    return (distanceKm / timeSeconds) * 3600;
+};
+
+const calculateCurrentPace = (
+    timeInSeconds: number,
+    distanceInKm: number
+): string => {
+    if (distanceInKm < MIN_DISTANCE_FOR_PACE) return "--:--";
+    
+    // Use the direct calculation
+    const pace = calculatePaceFromTimeAndDistance(timeInSeconds, distanceInKm);
+    
+    // Validate the pace is reasonable
+    const paceSeconds = timeInSeconds / distanceInKm;
+    const paceMinutes = paceSeconds / 60;
+    
+    if (paceMinutes > MAX_VALID_PACE || paceMinutes < MIN_VALID_PACE) {
+        return "--:--";
+    }
+    
+    return pace;
 };
 
 const RunningScreen = () => {
@@ -299,14 +318,6 @@ const RunningScreen = () => {
 
             const timeElapsed = formatDuration(workoutStats.duration);
 
-            const currentSpeed =
-                workoutStats.currentSpeed > 0
-                    ? 60 / workoutStats.currentSpeed
-                    : 0;
-            const averageSpeed =
-                workoutStats.averageSpeed > 0
-                    ? 60 / workoutStats.averageSpeed
-                    : 0;
 
             const workoutData = {
                 startTime: workoutStats.startTime,
@@ -315,12 +326,21 @@ const RunningScreen = () => {
                 duration: formatDuration(workoutStats.duration),
 
                 distance: Number(workoutStats.distance.toFixed(2)),
-                speed: Number(currentSpeed.toFixed(2)),
-                averageSpeed: Number(workoutStats.averageSpeed.toFixed(1)),
+                speed: workoutStats.currentSpeed,
                 currentSpeed: Number(workoutStats.currentSpeed.toFixed(1)),
+                averageSpeed: calculateAverageSpeed(
+                    workoutStats.distance,
+                    workoutStats.duration
+                ),
 
-                currentPace: formatPace(60 / workoutStats.currentSpeed),
-                averagePace: formatPace(60 / workoutStats.averageSpeed),
+                currentPace: calculateCurrentPace(
+                    workoutStats.duration,
+                    workoutStats.distance
+                ),
+                averagePace: calculateCurrentPace(
+                    workoutStats.duration,
+                    workoutStats.distance
+                ),
 
                 steps: workoutStats.steps,
                 route: routeCoordinates.map((coord) => ({
@@ -330,6 +350,8 @@ const RunningScreen = () => {
                     ),
                 })),
             };
+            
+            console.log(workoutData)
 
             setWorkoutCompleteData(workoutData);
             setShowCompleteModal(true);
@@ -386,11 +408,7 @@ const RunningScreen = () => {
 
     useEffect(() => {
         animateStats();
-    }, [
-        workoutStats.distance,
-        workoutStats.duration,
-        workoutStats.currentSpeed,
-    ]);
+    }, []);
 
     return (
         <View style={styles.container}>
