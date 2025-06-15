@@ -23,7 +23,7 @@ import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
 const MIN_DISTANCE_FOR_PACE = 0.001; // 1 meter in kilometers
 const MIN_TOTAL_DISTANCE = 0.01; // 10 meters before showing average pace
 const MAX_VALID_PACE = 30; // Maximum valid pace in min/km
-const MIN_VALID_PACE = 2; // Minimum valid pace in min/km
+const MIN_VALID_PACE = 1; // Minimum valid pace in min/km
 const GPS_ACCURACY_THRESHOLD = 20; // meters
 const LOCATION_UPDATE_INTERVAL = 1000; // 1 second
 const PACE_AVERAGE_WINDOW = 5; // Number of readings for rolling average
@@ -79,11 +79,23 @@ const calculateCurrentPace = (
     return pace;
 };
 
-const simplifyRoute = (coordinates: RouteCoordinate[], targetPoints: number = 100): RouteCoordinate[] => {
-    if (coordinates.length <= targetPoints) return coordinates;
+const getRouteEndpoints = (coordinates: RouteCoordinate[]): RouteCoordinate[] => {
+    if (coordinates.length < 2) return coordinates;
     
-    const interval = Math.floor(coordinates.length / targetPoints);
-    return coordinates.filter((_, index) => index % interval === 0);
+    return [
+        {
+            ...coordinates[0],
+            latitude: Number(coordinates[0].latitude.toFixed(6)),
+            longitude: Number(coordinates[0].longitude.toFixed(6)),
+            timestamp: coordinates[0].timestamp
+        },
+        {
+            ...coordinates[coordinates.length - 1],
+            latitude: Number(coordinates[coordinates.length - 1].latitude.toFixed(6)),
+            longitude: Number(coordinates[coordinates.length - 1].longitude.toFixed(6)),
+            timestamp: coordinates[coordinates.length - 1].timestamp
+        }
+    ];
 };
 
 const RunningScreen = () => {
@@ -343,16 +355,14 @@ const RunningScreen = () => {
                     workoutStats.duration,
                     workoutStats.distance
                 ),
-                route: simplifyRoute([
-                    routeCoordinates[0],
-                    ...simplifyRoute(routeCoordinates.slice(1, -1)),
-                    routeCoordinates[routeCoordinates.length - 1],
-                ]).map(coord => ({
+                steps: 1,
+                route: getRouteEndpoints(routeCoordinates).map(coord => ({
                     latitude: Number(coord.latitude.toFixed(6)),
                     longitude: Number(coord.longitude.toFixed(6)),
                     timestamp: formatDateTime(new Date(coord.timestamp || Date.now()))
                 })),
             };
+            
             setWorkoutCompleteData(workoutData);
             setShowCompleteModal(true);
 
