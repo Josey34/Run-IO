@@ -62,6 +62,23 @@ const EmptyState = () => (
     </View>
 );
 
+const calculateAveragePace = (runs: Run[]): string => {
+    const validPaces = runs
+        .filter(run => run.averagePace !== "--:--")
+        .map(run => {
+            const [minutes, seconds] = run.averagePace.split(":").map(Number);
+            return minutes * 60 + (seconds || 0); // Convert to total seconds
+        });
+
+    if (validPaces.length === 0) return "--:--";
+
+    const avgSeconds = validPaces.reduce((sum, seconds) => sum + seconds, 0) / validPaces.length;
+    const avgMinutes = Math.floor(avgSeconds / 60);
+    const remainingSeconds = Math.round(avgSeconds % 60);
+    
+    return `${avgMinutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
 const StatisticsScreen = () => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
@@ -220,11 +237,7 @@ const StatisticsScreen = () => {
             ? Number((validSpeeds.reduce((sum, speed) => sum + speed, 0) / validSpeeds.length).toFixed(2))
             : 0;
 
-        const validPaces = runs
-                .filter(run => run.averagePace !== "--:--")
-                .map(run => run.averagePace);
-    
-        const avgPace = validPaces.length > 0 ? validPaces[validPaces.length - 1] : "--:--";
+        const avgPace = calculateAveragePace(runs);
 
         const last7Days = Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
@@ -404,7 +417,7 @@ const StatisticsScreen = () => {
                     />
                     <Text style={styles.statTitle}>Avg. Pace</Text>
                     <Text style={styles.statValue}>
-                        {statistics.avgPace} min/km
+                        {statistics.avgPace} /km
                     </Text>
                 </View>
             </Animated.View>

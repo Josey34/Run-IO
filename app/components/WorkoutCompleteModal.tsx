@@ -155,7 +155,7 @@ const WorkoutCompleteModal: React.FC<WorkoutCompleteModalProps> = ({
                                 },
                                 {
                                     icon: "running",
-                                    value: `${workoutData.averagePace} min/km`,
+                                    value: `${workoutData.averagePace} /km`,
                                     label: "Avg Pace",
                                 },
                             ].map((stat, index) => (
