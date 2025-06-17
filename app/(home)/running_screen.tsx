@@ -16,6 +16,7 @@ import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
 import WorkoutCompleteModal from "../components/WorkoutCompleteModal";
+import { backgroundLocationService } from "../utils/backgroundLocationService";
 import { haversineDistance } from "../utils/distanceCalculations";
 import { calculatePaceFromTimeAndDistance, formatDuration } from "../utils/paceCalculations";
 import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
@@ -216,6 +217,8 @@ const RunningScreen = () => {
 
     const startTracking = async () => {
         try {
+            await backgroundLocationService.clearSavedLocations();
+            
             const { status } =
                 await Location.requestForegroundPermissionsAsync();
             if (status !== "granted") {
@@ -225,6 +228,8 @@ const RunningScreen = () => {
                 );
                 return;
             }
+            
+            await backgroundLocationService.registerBackgroundTask();
 
             const now = new Date();
             const formattedStartTime = formatLocalTime(now);
@@ -320,6 +325,8 @@ const RunningScreen = () => {
             );
             return;
         }
+        
+        await backgroundLocationService.unregisterBackgroundTask();
 
         locationSubscription.current?.remove();
         pedometerSubscription.current?.remove();
