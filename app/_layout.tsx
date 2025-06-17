@@ -30,7 +30,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             for (const location of locations) {
                 await backgroundLocationService.saveLocationPoint(location);
             }
-            console.log(`Processed ${locations.length} location updates`);
+            // console.log(`Processed ${locations.length} location updates`);
         } catch (error) {
             console.error("Error processing location updates:", error);
         }

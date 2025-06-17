@@ -19,7 +19,7 @@ export class BackgroundLocationService {
 
     async registerBackgroundTask() {
         try {
-            console.log('[BackgroundLocationService] Starting location tracking...');
+            // console.log('[BackgroundLocationService] Starting location tracking...');
             
             // Check if already tracking
             if (this.isTracking) {
@@ -28,7 +28,7 @@ export class BackgroundLocationService {
             }
 
             // Request permissions
-            console.log('[BackgroundLocationService] Requesting permissions...');
+            // console.log('[BackgroundLocationService] Requesting permissions...');
             const { status: foregroundStatus } = 
                 await Location.requestForegroundPermissionsAsync();
             
@@ -45,7 +45,7 @@ export class BackgroundLocationService {
             }
 
             // Start location updates
-            console.log('[BackgroundLocationService] Starting location updates...');
+            // console.log('[BackgroundLocationService] Starting location updates...');
             await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
                 accuracy: Location.Accuracy.BestForNavigation,
                 timeInterval: 15000,
@@ -60,7 +60,7 @@ export class BackgroundLocationService {
             });
 
             this.isTracking = true;
-            console.log('[BackgroundLocationService] Location tracking started successfully');
+            // console.log('[BackgroundLocationService] Location tracking started successfully');
         } catch (error) {
             console.error('[BackgroundLocationService] Failed to start tracking:', error);
             throw error;
@@ -69,12 +69,12 @@ export class BackgroundLocationService {
 
     async unregisterBackgroundTask() {
         try {
-            console.log('[BackgroundLocationService] Stopping location tracking...');
+            // console.log('[BackgroundLocationService] Stopping location tracking...');
             
             if (await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK)) {
                 await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
                 this.isTracking = false;
-                console.log('[BackgroundLocationService] Location tracking stopped');
+                // console.log('[BackgroundLocationService] Location tracking stopped');
             } else {
                 console.log('[BackgroundLocationService] No active location tracking found');
             }
@@ -86,12 +86,12 @@ export class BackgroundLocationService {
 
     async saveLocationPoint(location: Location.LocationObject) {
         try {
-            console.log(`[BackgroundLocationService] Saving location: ${JSON.stringify({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-                speed: location.coords.speed,
-                time: new Date(location.timestamp).toISOString()
-            })}`);
+            // console.log(`[BackgroundLocationService] Saving location: ${JSON.stringify({
+            //     lat: location.coords.latitude,
+            //     lng: location.coords.longitude,
+            //     speed: location.coords.speed,
+            //     time: new Date(location.timestamp).toISOString()
+            // })}`);
 
             let distance = 0;
             if (this.lastLocation) {
@@ -118,7 +118,7 @@ export class BackgroundLocationService {
             await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingPoints));
 
             this.lastLocation = location;
-            console.log(`[BackgroundLocationService] Location saved, total points: ${existingPoints.length}`);
+            // console.log(`[BackgroundLocationService] Location saved, total points: ${existingPoints.length}`);
         } catch (error) {
             console.error('[BackgroundLocationService] Error saving location:', error);
             throw error;
