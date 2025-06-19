@@ -36,7 +36,6 @@ describe('Run-IO App Flow Test', () => {
         await driver.$('~register-name-input').setValue('Test User');
         await driver.$('~register-email-input').setValue('test@example.com');
         await driver.$('~register-password-input').setValue('password123');
-        await driver.$('~register-confirm-password-input').setValue('password123');
         await driver.$('~register-button').click();
 
         // Wait for warning screen
@@ -58,6 +57,10 @@ describe('Run-IO App Flow Test', () => {
         await driver.$('~gender-picker').click();
         await driver.$('~gender-man').click();
         await driver.$('~process-button').click();
+        
+        //Go to challenges screen
+        const challengesButton = await driver.$('~challenges-button');
+        await challengesButton.click();
 
         // Wait for challenges screen
         const challengesTitle = await driver.$('~challenges-title');

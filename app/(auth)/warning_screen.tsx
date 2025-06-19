@@ -81,6 +81,7 @@ const WarningScreen = () => {
                         <Text style={styles.buttonText}>OK</Text>
                     </TouchableOpacity> */}
                     <CustomButton
+                        testID="warning-modal-ok-button"
                         title={"OK"}
                         onPress={handleFirstModalClose}
                     />
@@ -105,12 +106,14 @@ const WarningScreen = () => {
                     </Text>
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity
+                            testID="warning-modal-yes-button"
                             style={styles.button}
                             onPress={handleSecondModalCloseYes}
                         >
                             <Text style={styles.buttonText}>YES</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
+                            testID="warning-modal-no-button"
                             style={styles.button}
                             onPress={handleSecondModalCloseNo}
                         >

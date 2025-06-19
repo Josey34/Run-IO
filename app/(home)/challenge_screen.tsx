@@ -237,6 +237,7 @@ const ChallengeScreen = () => {
                 />
                 {filters.map((option) => (
                     <TouchableOpacity
+                        testID={`filter-button-${option}`}
                         key={option}
                         style={styles.filterButton}
                         onPress={() => setFilter(option)}
@@ -283,7 +284,7 @@ const ChallengeScreen = () => {
                                 },
                             ]}
                         >
-                            <View style={styles.challengeItem}>
+                            <View style={styles.challengeItem} testID={`challenge-${item.id}`}>
                                 <Animated.View
                                     style={[
                                         styles.iconContainer,
@@ -349,6 +350,7 @@ const ChallengeScreen = () => {
                                         />
                                     ) : (
                                         <Ionicons
+                                            testID="checkmark-button"
                                             name="checkmark"
                                             size={18}
                                             color="#fff"
@@ -374,6 +376,7 @@ const ChallengeScreen = () => {
                                         />
                                     ) : (
                                         <Ionicons
+                                            testID="cancel-button"
                                             name="close"
                                             size={18}
                                             color="#fff"

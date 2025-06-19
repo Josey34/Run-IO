@@ -45,6 +45,7 @@ export default function LoginScreen() {
 
                 <Text style={styles.inputTitle}>Email:</Text>
                 <TextInput
+                    testID="email-login-input"
                     style={styles.input}
                     value={email}
                     onChangeText={setEmail}
@@ -53,6 +54,7 @@ export default function LoginScreen() {
 
                 <Text style={styles.inputTitle}>Password:</Text>
                 <TextInput
+                    testID="password-login-input"
                     style={styles.input}
                     secureTextEntry
                     value={password}
@@ -68,6 +70,7 @@ export default function LoginScreen() {
                     </Text>
                 </Text>
                 <CustomButton
+                    testID="login-submit-button"
                     title="Login"
                     onPress={handleLogin}
                     disabled={isLoading}
