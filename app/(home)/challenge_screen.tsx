@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useRunHistory } from "../../hooks/runHistoryContext";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import CustomModal from "../components/CustomModal";
@@ -25,6 +26,49 @@ interface Challenge {
     duration: number;
     completed: boolean;
 }
+
+interface SingleMetricChallenge extends Challenge {
+    metricType: 'Distance' | 'Speed' | 'Duration';
+    value: any;
+    unit: string;
+    icon: string;
+    singleMetricId: string;
+    singleCompleted: boolean;
+}
+
+const splitChallenges = (challenges: Challenge[]): SingleMetricChallenge[] => {
+    const result: SingleMetricChallenge[] = [];
+    challenges.forEach((c) => {
+        result.push({
+            ...c,
+            metricType: 'Distance',
+            value: c.distance.toFixed(1),
+            unit: 'km',
+            icon: 'map-marker-distance',
+            singleMetricId: `${c.id}-distance`,
+            singleCompleted: false,
+        });
+        result.push({
+            ...c,
+            metricType: 'Speed',
+            value: c.speed.toFixed(2),
+            unit: 'km/h',
+            icon: 'speedometer',
+            singleMetricId: `${c.id}-speed`,
+            singleCompleted: false,
+        });
+        result.push({
+            ...c,
+            metricType: 'Duration',
+            value: c.duration,
+            unit: 'min',
+            icon: 'timer-outline',
+            singleMetricId: `${c.id}-duration`,
+            singleCompleted: false,
+        });
+    });
+    return result;
+};
 
 const ChallengeScreen = () => {
     const { user } = useAuth();
@@ -53,14 +97,22 @@ const ChallengeScreen = () => {
     const userChallenges: Challenge[] = challenges.filter(
         (challenge: Challenge): boolean => challenge?.userId === user?.uid
     );
-
+    
+    const { runHistory } = useRunHistory();
+    
     const filters = ["All", "On Going", "Completed"];
 
-    const filteredChallenges = userChallenges.filter((challenge) => {
+    const [singleMetricChallenges, setSingleMetricChallenges] = useState<SingleMetricChallenge[]>(splitChallenges(userChallenges));
+
+    useEffect(() => {
+        setSingleMetricChallenges(splitChallenges(userChallenges));
+    }, [challenges]);
+
+    const filteredChallenges = singleMetricChallenges.filter((challenge) => {
         if (filter === "All") return true;
         return filter === "Completed"
-            ? challenge.completed
-            : !challenge.completed;
+            ? challenge.singleCompleted
+            : !challenge.singleCompleted;
     });
 
     // Add new animation values
@@ -102,6 +154,18 @@ const ChallengeScreen = () => {
             useNativeDriver: true,
         }).start();
     }, [filter])
+    
+    useEffect(() => {
+        filteredChallenges.forEach((challenge) => {
+            if (getChallengeProgress(challenge) === 1 && !challenge.completed) {
+                // Mark as completed (update backend if needed)
+                // Show modal
+                // setShowCompletionModal(true);
+                // Optionally, switch to Completed tab
+                // setFilter("Completed");
+            }
+        });
+    }, [runHistory]);
 
     const buttonPressAnimation = () => {
         Animated.sequence([
@@ -157,40 +221,53 @@ const ChallengeScreen = () => {
     };
 
     const handleUpdateChallenge = async (
-        challengeId: number,
+        singleMetricId: string,
         completed: boolean
     ) => {
-        try {
-            const success = await updateChallenge(challengeId, completed);
-            if (success) {
-                showModal(
-                    `Challenge ${
-                        completed ? "completed" : "cancelled"
-                    } successfully!`
-                );
-            } else {
-                showModal(
-                    "Failed to update challenge status. Please try again."
-                );
-            }
-        } catch (error) {
-            showModal("Failed to update challenge status. Please try again.");
-            console.error("Error updating challenge:", error);
-        }
+        // const success = await updateChallenge(singleMetricId, completed);
+        // if (success) {
+            
+            setSingleMetricChallenges((prev) =>
+                prev.map((c) =>
+                    c.singleMetricId === singleMetricId
+                        ? { ...c, singleCompleted: completed }
+                        : c
+                )
+            );
+            showModal(
+                `Challenge ${completed ? "completed" : "cancelled"} successfully!`
+            );
+        // }
     };
 
-    const handleComplete = (challengeId: number) => {
+    const handleComplete = (singleMetricId: string) => {
         showModal(
             "Are you sure you want to mark this challenge as completed?",
-            () => handleUpdateChallenge(challengeId, true)
+            () => handleUpdateChallenge(singleMetricId, true)
         );
     };
 
-    const handleCancel = (challengeId: number) => {
-        showModal("Are you sure you want to cancel this challenge?", () =>
-            handleUpdateChallenge(challengeId, false)
+    const handleCancel = (singleMetricId: string) => {
+        showModal("Are you sure you want to un-complete this challenge?", () =>
+            handleUpdateChallenge(singleMetricId, false)
         );
     };
+    
+const getChallengeProgress = (challenge: SingleMetricChallenge) => {
+    const latestRun = runHistory[runHistory.length - 1];
+    if (!latestRun) return 0;
+
+    switch (challenge.metricType) {
+        case "Distance":
+            return Math.min(latestRun.distance / challenge.distance, 1);
+        case "Speed":
+            return Math.min(latestRun.speed / challenge.speed, 1);
+        case "Duration":
+            return Math.min(latestRun.duration / challenge.duration, 1);
+        default:
+            return 0;
+    }
+};
 
     return (
         <View style={styles.container}>
@@ -212,14 +289,9 @@ const ChallengeScreen = () => {
                         <ActivityIndicator size="small" color="#007bff" />
                     ) : (
                         <Text style={styles.progressText}>
-                            {
-                                userChallenges.filter(
-                                    (challenge) => challenge.completed
-                                ).length
-                            }
+                            {singleMetricChallenges.filter((challenge) => challenge.singleCompleted).length}
                             <Text style={{ color: "#000", fontSize: 18 }}>
-                                {" "}
-                                / {userChallenges.length}
+                                {" "}/ {singleMetricChallenges.length}
                             </Text>
                         </Text>
                     )}
@@ -266,8 +338,8 @@ const ChallengeScreen = () => {
             ) : (
                 <FlatList
                     data={filteredChallenges}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item, index }) => (
+                    keyExtractor={(item) => item.singleMetricId}
+                    renderItem={({ item }) => (
                         <Animated.View
                             style={[
                                 { flexDirection: "row", marginBottom: 20 },
@@ -284,7 +356,7 @@ const ChallengeScreen = () => {
                                 },
                             ]}
                         >
-                            <View style={styles.challengeItem} testID={`challenge-${item.id}`}>
+                            <View style={styles.challengeItem} testID={`challenge-${item.singleMetricId}`}>
                                 <Animated.View
                                     style={[
                                         styles.iconContainer,
@@ -297,31 +369,30 @@ const ChallengeScreen = () => {
                                         },
                                     ]}
                                 >
-                                    <Ionicons
-                                        name="fitness"
-                                        size={20}
+                                    <MaterialCommunityIcons
+                                        name={item.icon}
+                                        size={24}
                                         color="#fff"
                                     />
                                 </Animated.View>
                                 <View style={styles.challengeInfo}>
-                                    <View style={styles.infoTop}>
-                                        <Text style={styles.challengeType}>
-                                            {item.type}
-                                        </Text>
-                                        <Text style={styles.challengeDistance}>
-                                            {item?.distance?.toFixed(2)} km
-                                        </Text>
-                                    </View>
-                                    <View style={styles.separator} />
-                                    <View style={styles.infoBottom}>
-                                        <Text style={styles.challengeDetails}>
-                                            Speed: {item?.speed?.toFixed(2)}{" "}
-                                            km/h
-                                        </Text>
-                                        <Text style={styles.challengeDetails}>
-                                            Duration:{" "}
-                                            {item?.duration?.toFixed(0)} min
-                                        </Text>
+                                    <Text style={styles.challengeType}>
+                                        {item.metricType} Challenge
+                                    </Text>
+                                    <Text style={styles.statValue}>
+                                        {item.value} {item.unit}
+                                    </Text>
+                                    <View style={{ marginTop: 8 }}>
+                                        <View style={styles.progressBar}>
+                                            <View
+                                                style={{
+                                                    width: `${getChallengeProgress(item) * 100}%`,
+                                                    height: 8,
+                                                    backgroundColor: "#4CAF50",
+                                                    borderRadius: 4,
+                                                }}
+                                            />
+                                        </View>
                                     </View>
                                 </View>
                             </View>
@@ -334,18 +405,17 @@ const ChallengeScreen = () => {
                                 <TouchableOpacity
                                     style={[
                                         styles.checkButton,
-                                        updatingChallengeId === item.id &&
-                                            styles.buttonDisabled,
+                                        item.singleCompleted && styles.buttonDisabled,
                                     ]}
                                     onPress={() => {
                                         buttonPressAnimation();
-                                        handleComplete(item.id);
+                                        handleComplete(item.singleMetricId);
                                     }}
-                                    disabled={updatingChallengeId === item.id}
                                 >
-                                    {updatingChallengeId === item.id ? (
-                                        <ActivityIndicator
-                                            size="small"
+                                    {item.singleCompleted ? (
+                                        <Ionicons
+                                            name="checkmark-done"
+                                            size={18}
                                             color="#fff"
                                         />
                                     ) : (
@@ -360,28 +430,18 @@ const ChallengeScreen = () => {
                                 <TouchableOpacity
                                     style={[
                                         styles.cancelButton,
-                                        updatingChallengeId === item.id &&
-                                            styles.buttonDisabled,
                                     ]}
                                     onPress={() => {
                                         buttonPressAnimation();
-                                        handleCancel(item.id);
+                                        handleCancel(item.singleMetricId);
                                     }}
-                                    disabled={updatingChallengeId === item.id}
                                 >
-                                    {updatingChallengeId === item.id ? (
-                                        <ActivityIndicator
-                                            size="small"
-                                            color="#fff"
-                                        />
-                                    ) : (
-                                        <Ionicons
-                                            testID="cancel-button"
-                                            name="close"
-                                            size={18}
-                                            color="#fff"
-                                        />
-                                    )}
+                                    <Ionicons
+                                        testID="cancel-button"
+                                        name="close"
+                                        size={18}
+                                        color="#fff"
+                                    />
                                 </TouchableOpacity>
                             </Animated.View>
                         </Animated.View>
@@ -595,6 +655,42 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
+    cardRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 10,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: "#fff",
+        borderRadius: 8,
+        padding: 10,
+        marginHorizontal: 3,
+        alignItems: "center",
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: "#7F8CAA",
+        marginTop: 4,
+    },
+    statValue: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#333",
+        marginTop: 2,
+    },
+    progressBar : {
+        height: 8,
+        backgroundColor: "#eee",
+        borderRadius: 4,
+        borderColor: "#222",
+        borderWidth: 1
+    }
 });
 
 export default ChallengeScreen;

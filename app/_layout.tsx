@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import * as TaskManager from "expo-task-manager";
 import { useEffect, useState } from "react";
 import { enableScreens } from "react-native-screens";
+import { RunHistoryProvider } from "../hooks/runHistoryContext";
 import { AuthProvider } from "../hooks/useAuth";
 import useColorScheme from "../hooks/useColorScheme";
 import { ErrorModalEmitter } from "./api/api_service";
@@ -69,7 +70,9 @@ export default function Layout() {
             >
                 <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
                 <AuthProvider>
-                    <Slot />
+                    <RunHistoryProvider>
+                        <Slot />
+                    </RunHistoryProvider>
                 </AuthProvider>
                 <ErrorModal
                     visible={errorVisible}
