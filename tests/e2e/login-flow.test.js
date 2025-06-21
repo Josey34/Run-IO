@@ -1,14 +1,15 @@
 const { remote } = require('webdriverio');
 
-describe('Run-IO App Flow Test', () => {
+describe('Run-IO App Flow Test', function() {
+    this.timeout(60000);
     let driver;
 
-    beforeAll(async () => {
+    before(async () => {
         const capabilities = {
             platformName: 'Android',
             'appium:automationName': 'UiAutomator2',
             'appium:deviceName': 'RRCW2003P9P',
-            'appium:app': '../../android/app/build/outputs/apk/release/RUN-IO.apk',
+            'appium:app': 'E:/Josey/kuliah/Tugas Akhir/App/Run-IO/android/app/build/outputs/apk/release/Run-IO.apk',
             'appium:noReset': false
         };
 
@@ -16,23 +17,23 @@ describe('Run-IO App Flow Test', () => {
             protocol: 'http',
             hostname: '127.0.0.1',
             port: 4723,
-            path: '/wd/hub',
+            path: '/',
             capabilities
         });
     });
 
-    afterAll(async () => {
+    after(async () => {
         if (driver) {
             await driver.deleteSession();
         }
     });
 
-    test('Register to Recommendations Flow', async () => {
+    it('Register to Recommendations Flow', async () => {
         const welcomeButton = await driver.$('android=new UiSelector().resourceId("start-running-button")');
         await welcomeButton.click();
         
         // 1. Navigate to Register Screen
-        const registerLink = await driver.$('~register-link');
+        const registerLink = await driver.$('android=new UiSelector().resourceId("register-link")');
         await registerLink.click();
 
         // 2. Register and Login Screen
@@ -41,8 +42,8 @@ describe('Run-IO App Flow Test', () => {
         await driver.$('android=new UiSelector().resourceId("password-register-input")').setValue('password123');
         await driver.$('android=new UiSelector().resourceId("register-submit-button")').click();
         
-        await driver.$('android=new UiSelector().resourceId("email-login-input")').setValue('j@j.com');
-        await driver.$('android=new UiSelector().resourceId("password-login-input")').setValue('123456');
+        await driver.$('android=new UiSelector().resourceId("email-login-input")').setValue('test@example.com');
+        await driver.$('android=new UiSelector().resourceId("password-login-input")').setValue('password123');
         await driver.$('android=new UiSelector().resourceId("login-submit-button")').click();
         // Wait for login to complete
 
@@ -55,7 +56,7 @@ describe('Run-IO App Flow Test', () => {
         await yesButton.click();
         
         const noButton = await driver.$('android=new UiSelector().resourceId("warning-modal-no-button")');
-        await no2Button.click();
+        await noButton.click();
 
         // Wait for form screen
         const formTitle = await driver.$('android=new UiSelector().text("Fill in your data")');

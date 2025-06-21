@@ -63,6 +63,7 @@ export default function LoginScreen() {
                 <Text style={styles.registerText}>
                     Don't have an account?{" "}
                     <Text
+                        testID="register-link"
                         style={styles.registerLink}
                         onPress={() => router.push("/register_screen")}
                     >
