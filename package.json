@@ -5,6 +5,7 @@
   "scripts": {
     "start": "npx expo start",
     "android": "npx expo start --android",
+    "local-android": "npx expo run:android",
     "build": "eas build --platform android --profile preview",
     "build-local": "cd android && gradlew clean && gradlew assembleRelease",
     "ios": "npx expo start --ios",

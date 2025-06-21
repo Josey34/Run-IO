@@ -382,7 +382,7 @@ const RunningScreen = () => {
                     date: new Date().toISOString().slice(0, 10), // 'YYYY-MM-DD'
                     distance: Number(workoutStats.distance.toFixed(2)),
                     speed: workoutStats.currentSpeed,
-                    duration: workoutStats.duration,
+                    duration: workoutStats.duration/60,
                 });
             } catch (error) {
                 ErrorModalEmitter.emit(

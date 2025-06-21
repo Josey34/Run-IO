@@ -1,4 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -28,7 +29,7 @@ interface Challenge {
 }
 
 interface SingleMetricChallenge extends Challenge {
-    metricType: 'Distance' | 'Speed' | 'Duration';
+    metricType: "Distance" | "Speed" | "Duration";
     value: any;
     unit: string;
     icon: string;
@@ -41,28 +42,28 @@ const splitChallenges = (challenges: Challenge[]): SingleMetricChallenge[] => {
     challenges.forEach((c) => {
         result.push({
             ...c,
-            metricType: 'Distance',
+            metricType: "Distance",
             value: c.distance.toFixed(1),
-            unit: 'km',
-            icon: 'map-marker-distance',
+            unit: "km",
+            icon: "map-marker-distance",
             singleMetricId: `${c.id}-distance`,
             singleCompleted: false,
         });
         result.push({
             ...c,
-            metricType: 'Speed',
+            metricType: "Speed",
             value: c.speed.toFixed(2),
-            unit: 'km/h',
-            icon: 'speedometer',
+            unit: "km/h",
+            icon: "speedometer",
             singleMetricId: `${c.id}-speed`,
             singleCompleted: false,
         });
         result.push({
             ...c,
-            metricType: 'Duration',
+            metricType: "Duration",
             value: c.duration,
-            unit: 'min',
-            icon: 'timer-outline',
+            unit: "min",
+            icon: "timer-outline",
             singleMetricId: `${c.id}-duration`,
             singleCompleted: false,
         });
@@ -97,12 +98,24 @@ const ChallengeScreen = () => {
     const userChallenges: Challenge[] = challenges.filter(
         (challenge: Challenge): boolean => challenge?.userId === user?.uid
     );
-    
-    const { runHistory } = useRunHistory();
-    
-    const filters = ["All", "On Going", "Completed"];
 
-    const [singleMetricChallenges, setSingleMetricChallenges] = useState<SingleMetricChallenge[]>(splitChallenges(userChallenges));
+    const { runHistory } = useRunHistory();
+
+    const filters = ["All", "On Going", "Completed"];
+    
+    const RESET_KEY = "challenge_last_reset_date";
+
+    const [singleMetricChallenges, setSingleMetricChallenges] = useState<
+        SingleMetricChallenge[]
+    >(splitChallenges(userChallenges));
+
+    const areAllMetricsCompleted = (parentId: number) => {
+        return (
+            singleMetricChallenges.filter(
+                (c) => c.id === parentId && c.singleCompleted
+            ).length === 3
+        );
+    };
 
     useEffect(() => {
         setSingleMetricChallenges(splitChallenges(userChallenges));
@@ -114,6 +127,56 @@ const ChallengeScreen = () => {
             ? challenge.singleCompleted
             : !challenge.singleCompleted;
     });
+
+    useEffect(() => {
+        setSingleMetricChallenges((prev) =>
+            prev.map((c) => {
+                const progress = getChallengeProgress(c);
+                if (!c.singleCompleted && progress >= 1) {
+                    return { ...c, singleCompleted: true };
+                }
+                // Optionally, if you want to auto-uncomplete if progress drops below 1:
+                // if (c.singleCompleted && progress < 1) {
+                //     return { ...c, singleCompleted: false };
+                // }
+                return c;
+            })
+        );
+    }, [runHistory]);
+    
+    useEffect(() => {
+        const parentIds = [
+            ...new Set(singleMetricChallenges.map((c) => c.id)),
+        ];
+
+        parentIds.forEach((parentId) => {
+            const allCompleted = singleMetricChallenges.filter(
+                (c) => c.id === parentId && c.singleCompleted
+            ).length === 3;
+
+            const parentChallenge = challenges.find((ch) => ch.id === parentId);
+
+            if (parentChallenge && parentChallenge.completed !== allCompleted) {
+                updateChallenge(parentId, allCompleted);
+            }
+        });
+    }, [singleMetricChallenges]);
+    
+    useEffect(() => {
+        const resetIfNewDay = async () => {
+            const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+            const lastReset = await AsyncStorage.getItem(RESET_KEY);
+
+            if (lastReset !== today) {
+                setSingleMetricChallenges((prev) =>
+                    prev.map((c) => ({ ...c, singleCompleted: false }))
+                );
+                await AsyncStorage.setItem(RESET_KEY, today);
+            }
+        };
+
+        resetIfNewDay();
+    }, []);
 
     // Add new animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -153,19 +216,7 @@ const ChallengeScreen = () => {
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
         }).start();
-    }, [filter])
-    
-    useEffect(() => {
-        filteredChallenges.forEach((challenge) => {
-            if (getChallengeProgress(challenge) === 1 && !challenge.completed) {
-                // Mark as completed (update backend if needed)
-                // Show modal
-                // setShowCompletionModal(true);
-                // Optionally, switch to Completed tab
-                // setFilter("Completed");
-            }
-        });
-    }, [runHistory]);
+    }, [filter]);
 
     const buttonPressAnimation = () => {
         Animated.sequence([
@@ -224,20 +275,16 @@ const ChallengeScreen = () => {
         singleMetricId: string,
         completed: boolean
     ) => {
-        // const success = await updateChallenge(singleMetricId, completed);
-        // if (success) {
-            
-            setSingleMetricChallenges((prev) =>
-                prev.map((c) =>
-                    c.singleMetricId === singleMetricId
-                        ? { ...c, singleCompleted: completed }
-                        : c
-                )
-            );
-            showModal(
-                `Challenge ${completed ? "completed" : "cancelled"} successfully!`
-            );
-        // }
+        setSingleMetricChallenges((prev) =>
+            prev.map((c) =>
+                c.singleMetricId === singleMetricId
+                    ? { ...c, singleCompleted: completed }
+                    : c
+            )
+        );
+        showModal(
+            `Challenge ${completed ? "completed" : "cancelled"} successfully!`
+        );
     };
 
     const handleComplete = (singleMetricId: string) => {
@@ -252,22 +299,33 @@ const ChallengeScreen = () => {
             handleUpdateChallenge(singleMetricId, false)
         );
     };
-    
-const getChallengeProgress = (challenge: SingleMetricChallenge) => {
-    const latestRun = runHistory[runHistory.length - 1];
-    if (!latestRun) return 0;
 
-    switch (challenge.metricType) {
-        case "Distance":
-            return Math.min(latestRun.distance / challenge.distance, 1);
-        case "Speed":
+    const getChallengeProgress = (challenge: SingleMetricChallenge) => {
+        if (runHistory.length === 0) return 0;
+
+        if (challenge.metricType === "Distance") {
+            const totalDistance = runHistory.reduce(
+                (sum, run) => sum + run.distance,
+                0
+            );
+            return Math.min(totalDistance / challenge.distance, 1);
+        }
+
+        if (challenge.metricType === "Duration") {
+            const totalDuration = runHistory.reduce(
+                (sum, run) => sum + run.duration,
+                0
+            );
+            return Math.min(totalDuration / challenge.duration, 1);
+        }
+
+        if (challenge.metricType === "Speed") {
+            const latestRun = runHistory[runHistory.length - 1];
             return Math.min(latestRun.speed / challenge.speed, 1);
-        case "Duration":
-            return Math.min(latestRun.duration / challenge.duration, 1);
-        default:
-            return 0;
-    }
-};
+        }
+
+        return 0;
+    };
 
     return (
         <View style={styles.container}>
@@ -289,9 +347,14 @@ const getChallengeProgress = (challenge: SingleMetricChallenge) => {
                         <ActivityIndicator size="small" color="#007bff" />
                     ) : (
                         <Text style={styles.progressText}>
-                            {singleMetricChallenges.filter((challenge) => challenge.singleCompleted).length}
+                            {
+                                singleMetricChallenges.filter(
+                                    (challenge) => challenge.singleCompleted
+                                ).length
+                            }
                             <Text style={{ color: "#000", fontSize: 18 }}>
-                                {" "}/ {singleMetricChallenges.length}
+                                {" "}
+                                / {singleMetricChallenges.length}
                             </Text>
                         </Text>
                     )}
@@ -356,7 +419,10 @@ const getChallengeProgress = (challenge: SingleMetricChallenge) => {
                                 },
                             ]}
                         >
-                            <View style={styles.challengeItem} testID={`challenge-${item.singleMetricId}`}>
+                            <View
+                                style={styles.challengeItem}
+                                testID={`challenge-${item.singleMetricId}`}
+                            >
                                 <Animated.View
                                     style={[
                                         styles.iconContainer,
@@ -383,16 +449,33 @@ const getChallengeProgress = (challenge: SingleMetricChallenge) => {
                                         {item.value} {item.unit}
                                     </Text>
                                     <View style={{ marginTop: 8 }}>
-                                        <View style={styles.progressBar}>
-                                            <View
+                                        {getChallengeProgress(item) >= 1 ? (
+                                            <Text
                                                 style={{
-                                                    width: `${getChallengeProgress(item) * 100}%`,
-                                                    height: 8,
-                                                    backgroundColor: "#4CAF50",
-                                                    borderRadius: 4,
+                                                    color: "#4CAF50",
+                                                    fontWeight: "bold",
+                                                    fontSize: 14,
                                                 }}
-                                            />
-                                        </View>
+                                            >
+                                                Completed
+                                            </Text>
+                                        ) : (
+                                            <View style={styles.progressBar}>
+                                                <View
+                                                    style={{
+                                                        width: `${
+                                                            getChallengeProgress(
+                                                                item
+                                                            ) * 100
+                                                        }%`,
+                                                        height: 8,
+                                                        backgroundColor:
+                                                            "#4CAF50",
+                                                        borderRadius: 4,
+                                                    }}
+                                                />
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
                             </View>
@@ -405,7 +488,8 @@ const getChallengeProgress = (challenge: SingleMetricChallenge) => {
                                 <TouchableOpacity
                                     style={[
                                         styles.checkButton,
-                                        item.singleCompleted && styles.buttonDisabled,
+                                        item.singleCompleted &&
+                                            styles.buttonDisabled,
                                     ]}
                                     onPress={() => {
                                         buttonPressAnimation();
@@ -428,9 +512,7 @@ const getChallengeProgress = (challenge: SingleMetricChallenge) => {
                                     )}
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[
-                                        styles.cancelButton,
-                                    ]}
+                                    style={[styles.cancelButton]}
                                     onPress={() => {
                                         buttonPressAnimation();
                                         handleCancel(item.singleMetricId);
@@ -684,13 +766,11 @@ const styles = StyleSheet.create({
         color: "#333",
         marginTop: 2,
     },
-    progressBar : {
+    progressBar: {
         height: 8,
         backgroundColor: "#eee",
         borderRadius: 4,
-        borderColor: "#222",
-        borderWidth: 1
-    }
+    },
 });
 
 export default ChallengeScreen;
