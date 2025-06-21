@@ -61,7 +61,7 @@ const splitChallenges = (challenges: Challenge[]): SingleMetricChallenge[] => {
         result.push({
             ...c,
             metricType: "Duration",
-            value: c.duration,
+            value: c.duration.toFixed(2),
             unit: "min",
             icon: "timer-outline",
             singleMetricId: `${c.id}-duration`,

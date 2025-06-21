@@ -1,7 +1,13 @@
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ImageBackground, StyleSheet, Text, TextInput } from "react-native";
+import {
+    ImageBackground,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+} from "react-native";
 import { useAuth } from "../../hooks/useAuth";
 import { checkUserFormData, ErrorModalEmitter } from "../api/api_service";
 import CustomButton from "../components/CustomButton";
@@ -60,16 +66,16 @@ export default function LoginScreen() {
                     value={password}
                     onChangeText={setPassword}
                 />
-                <Text style={styles.registerText}>
-                    Don't have an account?{" "}
-                    <Text
-                        testID="register-link"
-                        style={styles.registerLink}
-                        onPress={() => router.push("/register_screen")}
-                    >
-                        Register Now
+                <TouchableOpacity testID="register-link-button" onPress={() => router.push("/register_screen")}>
+                    <Text style={styles.registerText}>
+                        Don't have an account?{" "}
+                        <Text
+                            style={styles.registerLink}
+                        >
+                            Register Now
+                        </Text>
                     </Text>
-                </Text>
+                </TouchableOpacity>
                 <CustomButton
                     testID="login-submit-button"
                     title="Login"
@@ -112,6 +118,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     registerText: {
+        marginTop: 1,
         alignSelf: "flex-start",
         color: "black",
     },
