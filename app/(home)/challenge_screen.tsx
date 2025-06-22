@@ -108,6 +108,7 @@ const ChallengeScreen = () => {
     const [singleMetricChallenges, setSingleMetricChallenges] = useState<
         SingleMetricChallenge[]
     >(splitChallenges(userChallenges));
+    const [progressLoaded, setProgressLoaded] = useState(false);
 
     const areAllMetricsCompleted = (parentId: number) => {
         return (
@@ -118,8 +119,37 @@ const ChallengeScreen = () => {
     };
 
     useEffect(() => {
-        setSingleMetricChallenges(splitChallenges(userChallenges));
-    }, [challenges]);
+        let isMounted = true;
+        const loadAndMerge = async () => {
+            const today = getToday();
+            const lastReset = await AsyncStorage.getItem(RESET_KEY);
+
+            let baseChallenges = splitChallenges(userChallenges);
+
+            if (lastReset !== today) {
+                await AsyncStorage.setItem(RESET_KEY, today);
+                await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
+                if (isMounted) {
+                    setSingleMetricChallenges(baseChallenges);
+                    setProgressLoaded(true);
+                }
+            } else {
+                const stored = await loadProgress();
+                if (isMounted) {
+                    setSingleMetricChallenges(
+                        baseChallenges.map((c) =>
+                            stored[c.singleMetricId] !== undefined
+                                ? { ...c, singleCompleted: stored[c.singleMetricId] }
+                                : c
+                        )
+                    );
+                    setProgressLoaded(true);
+                }
+            }
+        };
+        loadAndMerge();
+        return () => { isMounted = false; };
+    }, [userChallenges.length]);
 
     const filteredChallenges = singleMetricChallenges.filter((challenge) => {
         if (filter === "All") return true;
@@ -197,40 +227,44 @@ const ChallengeScreen = () => {
         }
     };
 
-    // On mount, check for reset and load progress
     useEffect(() => {
-        const init = async () => {
+        let isMounted = true;
+        const loadAndMerge = async () => {
             const today = getToday();
             const lastReset = await AsyncStorage.getItem(RESET_KEY);
 
+            let baseChallenges = splitChallenges(userChallenges);
+
             if (lastReset !== today) {
-                // New day: reset progress
-                setSingleMetricChallenges((prev) =>
-                    prev.map((c) => ({ ...c, singleCompleted: false }))
-                );
                 await AsyncStorage.setItem(RESET_KEY, today);
                 await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
+                if (isMounted) {
+                    setSingleMetricChallenges(baseChallenges);
+                    setProgressLoaded(true);
+                }
             } else {
-                // Same day: load progress
                 const stored = await loadProgress();
-                setSingleMetricChallenges((prev) =>
-                    prev.map((c) =>
-                        stored[c.singleMetricId] !== undefined
-                            ? { ...c, singleCompleted: stored[c.singleMetricId] }
-                            : c
-                    )
-                );
+                if (isMounted) {
+                    setSingleMetricChallenges(
+                        baseChallenges.map((c) =>
+                            stored[c.singleMetricId] !== undefined
+                                ? { ...c, singleCompleted: stored[c.singleMetricId] }
+                                : c
+                        )
+                    );
+                    setProgressLoaded(true);
+                }
             }
         };
-        init();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        loadAndMerge();
+        return () => { isMounted = false; };
+    }, [userChallenges.length]);
 
-    // Save progress whenever it changes
     useEffect(() => {
-        saveProgress(singleMetricChallenges);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [singleMetricChallenges]);
+        if (progressLoaded) {
+            saveProgress(singleMetricChallenges);
+        }
+    }, [singleMetricChallenges, progressLoaded]);
 
     // Add new animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -446,7 +480,9 @@ const ChallengeScreen = () => {
             </View>
 
             {/* Challenge List */}
-            {loading && !refreshing ? (
+            {!progressLoaded ? (
+                <ActivityIndicator size="large" color="#007bff" style={styles.loadingIndicator} />
+            ) : loading && !refreshing ? (
                 <ActivityIndicator
                     size="large"
                     color="#007bff"
