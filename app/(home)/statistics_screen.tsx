@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Animated,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -20,7 +21,7 @@ interface Run {
     averageSpeed: number;
     createdAt: string;
     currentPace: string;
-    currentSpeed: number;
+    speed: number;
     distance: number;
     duration: string;
     endTime: string;
@@ -61,7 +62,28 @@ const EmptyState = () => (
     </View>
 );
 
+const calculateAveragePace = (runs: Run[]): string => {
+    const validPaces = runs
+        .filter(run => run.averagePace !== "--:--")
+        .map(run => {
+            const [minutes, seconds] = run.averagePace.split(":").map(Number);
+            return minutes * 60 + (seconds || 0); // Convert to total seconds
+        });
+
+    if (validPaces.length === 0) return "--:--";
+
+    const avgSeconds = validPaces.reduce((sum, seconds) => sum + seconds, 0) / validPaces.length;
+    const avgMinutes = Math.floor(avgSeconds / 60);
+    const remainingSeconds = Math.round(avgSeconds % 60);
+    
+    return `${avgMinutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
 const StatisticsScreen = () => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+    const chartAnim = useRef(new Animated.Value(0)).current;
+    const statsAnim = useRef(new Animated.Value(0)).current;
     const [statistics, setStatistics] = useState<StatisticsData | null>(null);
     const { user } = useAuth();
     const { loading, error, fetchRun } = useFetch<Run[]>("");
@@ -86,9 +108,48 @@ const StatisticsScreen = () => {
         }
     };
 
+    const resetAndStartAnimations = () => {
+        // Reset all animations
+        fadeAnim.setValue(0);
+        slideAnim.setValue(50);
+        chartAnim.setValue(0);
+        statsAnim.setValue(0);
+
+        // Play animations in sequence
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.sequence([
+                Animated.delay(400),
+                Animated.timing(chartAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.sequence([
+                Animated.delay(800),
+                Animated.timing(statsAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+    };
+
     const onRefresh = async () => {
         setRefreshing(true);
         await loadRuns();
+        resetAndStartAnimations();
         setRefreshing(false);
     };
 
@@ -112,6 +173,7 @@ const StatisticsScreen = () => {
     useEffect(() => {
         loginError();
         loadRuns();
+        resetAndStartAnimations();
     }, [user]);
 
     const calculateStatistics = (runs: Run[]): StatisticsData => {
@@ -168,31 +230,14 @@ const StatisticsScreen = () => {
         const totalTime = `${totalHours}h ${totalMinutes}m`;
 
         const validSpeeds = runs
-            .filter((run) => run.currentSpeed > 0)
-            .map((run) => run.currentSpeed);
-        const avgSpeed =
-            validSpeeds.length > 0
-                ? validSpeeds.reduce((sum, speed) => sum + speed, 0) /
-                  validSpeeds.length
-                : 0;
+            .filter(run => run.averageSpeed > 0)
+            .map(run => run.averageSpeed);
+        
+        const avgSpeed = validSpeeds.length > 0
+            ? Number((validSpeeds.reduce((sum, speed) => sum + speed, 0) / validSpeeds.length).toFixed(2))
+            : 0;
 
-        const validPaces = runs
-            .filter((run) => run.currentPace && run.currentPace !== "--:--")
-            .map((run) => {
-                const [mins, secs] = run.currentPace.split(":").map(Number);
-                return mins * 60 + (secs || 0);
-            });
-
-        let avgPace = "--:--";
-        if (validPaces.length > 0) {
-            const avgSeconds =
-                validPaces.reduce((a, b) => a + b) / validPaces.length;
-            const avgMinutes = Math.floor(avgSeconds / 60);
-            const avgSecs = Math.round(avgSeconds % 60);
-            avgPace = `${avgMinutes}:${avgSecs.toString().padStart(2, "0")}`;
-        }
-
-        // const totalSteps = runs.reduce((sum, run) => sum + (run.steps || 0), 0); no need for now
+        const avgPace = calculateAveragePace(runs);
 
         const last7Days = Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
@@ -219,7 +264,7 @@ const StatisticsScreen = () => {
             totalDistance: Number(totalDistance.toFixed(2)),
             totalTime,
             avgPace,
-            avgSpeed: Number(avgSpeed.toFixed(2)),
+            avgSpeed,
             // totalSteps,
             lastRunDate,
             chartData: {
@@ -267,25 +312,43 @@ const StatisticsScreen = () => {
             }
         >
             {/* Header */}
-            <View style={styles.header}>
+            <Animated.View
+                style={[
+                    styles.header,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    },
+                ]}
+            >
                 <View>
                     <Text style={styles.title}>Statistics</Text>
                 </View>
-            </View>
+            </Animated.View>
 
             {/* Last Run Info */}
-            <View style={styles.lastRunContainer}>
+            <Animated.View
+                style={[
+                    styles.lastRunContainer,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    },
+                ]}
+            >
                 <Text style={styles.lastRunText}>
                     Last Run: {statistics.lastRunDate}
                 </Text>
-            </View>
+            </Animated.View>
 
             {/* Chart */}
-            <View style={styles.chartContainer}>
+            <Animated.View
+                style={[styles.chartContainer, { opacity: chartAnim }]}
+            >
                 <Text style={styles.chartTitle}>Last 7 Days Distance (km)</Text>
                 <LineChart
                     data={statistics.chartData}
-                    width={350}
+                    width={300}
                     height={200}
                     chartConfig={{
                         backgroundColor: "#1E2923",
@@ -309,10 +372,12 @@ const StatisticsScreen = () => {
                     }}
                     bezier
                 />
-            </View>
+            </Animated.View>
 
             {/* Statistics Boxes */}
-            <View style={styles.statsContainer}>
+            <Animated.View
+                style={[styles.statsContainer, { opacity: statsAnim }]}
+            >
                 <View style={styles.statBox}>
                     <MaterialCommunityIcons
                         name="map-marker-distance"
@@ -351,9 +416,11 @@ const StatisticsScreen = () => {
                         color="#FF4B4B"
                     />
                     <Text style={styles.statTitle}>Avg. Pace</Text>
-                    <Text style={styles.statValue}>{statistics.avgPace}</Text>
+                    <Text style={styles.statValue}>
+                        {statistics.avgPace} /km
+                    </Text>
                 </View>
-            </View>
+            </Animated.View>
 
             {/* Add some bottom padding for better scrolling */}
             <View style={styles.bottomPadding} />
@@ -364,7 +431,7 @@ const StatisticsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
+        backgroundColor: "#333446",
         padding: 20,
     },
     bottomPadding: {
@@ -421,7 +488,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     errorText: {
-        color: "#FF4B4B",
+        color: "#1E2923",
         fontSize: 20,
         fontWeight: "bold",
         marginTop: 16,
@@ -431,7 +498,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 15,
-        backgroundColor: "#333",
+        backgroundColor: "#7F8CAA",
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -442,24 +509,24 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
     lastRunContainer: {
-        backgroundColor: "#1E2923",
+        backgroundColor: "#B8CFCE",
         borderRadius: 16,
         padding: 12,
         marginBottom: 15,
     },
     lastRunText: {
-        color: "#fff",
+        color: "#888",
         fontSize: 14,
     },
     chartContainer: {
-        backgroundColor: "#1E2923",
+        backgroundColor: "#B8CFCE",
         borderRadius: 16,
         padding: 15,
         alignItems: "center",
         marginBottom: 20,
     },
     chartTitle: {
-        color: "#fff",
+        color: "#888",
         fontSize: 16,
         fontWeight: "bold",
         marginBottom: 10,
@@ -470,7 +537,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     statBox: {
-        backgroundColor: "#1E2923",
+        backgroundColor: "#EAEFEF",
         borderRadius: 16,
         padding: 15,
         width: "48%",
@@ -480,14 +547,14 @@ const styles = StyleSheet.create({
     statTitle: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#888",
+        color: "#1E2923",
         marginTop: 8,
         marginBottom: 4,
     },
     statValue: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#fff",
+        color: "#888",
     },
     speedValue: {
         fontSize: 14,

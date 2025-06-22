@@ -36,9 +36,20 @@
         "ACCESS_BACKGROUND_LOCATION",
         "ACTIVITY_RECOGNITION",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "WAKE_LOCK"
       ],
-      "package": "com.josey34.RunIO"
+      "foregroundService": {
+        "name": "location",
+        "notificationTitle": "Run-IO is tracking your location",
+        "notificationBody": "Location tracking is active"
+      },
+      "package": "com.josey34.RunIO",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -51,6 +62,7 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Run-IO to use your location to track your running activity.",
+          "locationAlwaysPermission": "Allow Run-IO to use your location in the background for tracking your runs.",
           "locationWhenInUsePermission": "Allow Run-IO to use your location to track your running activity.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true

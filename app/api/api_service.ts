@@ -127,7 +127,6 @@ export const saveRunData = async (
         averageSpeed: number;
         currentPace: string;
         averagePace: string;
-        steps: number;
         route: Array<{
             latitude: number;
             longitude: number;

@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Pedometer } from "expo-sensors";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Platform,
+    Animated,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -12,18 +12,20 @@ import {
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { mapStyle } from "../../constants/Map";
+import { useRunHistory } from "../../hooks/runHistoryContext";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
 import WorkoutCompleteModal from "../components/WorkoutCompleteModal";
+import { backgroundLocationService } from "../utils/backgroundLocationService";
 import { haversineDistance } from "../utils/distanceCalculations";
-import { formatDuration, formatPace } from "../utils/paceCalculations";
+import { calculatePaceFromTimeAndDistance, formatDuration } from "../utils/paceCalculations";
 import { formatDateTime, formatLocalTime } from "../utils/timeFormat";
 
 const MIN_DISTANCE_FOR_PACE = 0.001; // 1 meter in kilometers
 const MIN_TOTAL_DISTANCE = 0.01; // 10 meters before showing average pace
 const MAX_VALID_PACE = 30; // Maximum valid pace in min/km
-const MIN_VALID_PACE = 2; // Minimum valid pace in min/km
+const MIN_VALID_PACE = 1; // Minimum valid pace in min/km
 const GPS_ACCURACY_THRESHOLD = 20; // meters
 const LOCATION_UPDATE_INTERVAL = 1000; // 1 second
 const PACE_AVERAGE_WINDOW = 5; // Number of readings for rolling average
@@ -34,7 +36,6 @@ interface WorkoutStats {
     averageSpeed: number;
     distance: number;
     duration: number;
-    steps: number;
     startTime: string;
     rawStartTime: string;
     lastAverageUpdate: number;
@@ -55,12 +56,48 @@ const calculateSpeed = (
 };
 
 const calculateAverageSpeed = (
-    totalDistanceKm: number,
-    totalTimeSeconds: number
+    distanceKm: number,
+    timeSeconds: number
 ): number => {
-    if (totalDistanceKm < MIN_TOTAL_DISTANCE || totalTimeSeconds === 0)
-        return 0;
-    return (totalDistanceKm / totalTimeSeconds) * 3600;
+    if (!distanceKm || timeSeconds === 0) return 0;
+    return (distanceKm / timeSeconds) * 3600;
+};
+
+const calculateCurrentPace = (
+    timeInSeconds: number,
+    distanceInKm: number
+): string => {
+    if (distanceInKm < MIN_DISTANCE_FOR_PACE) return "--:--";
+    
+    const pace = calculatePaceFromTimeAndDistance(timeInSeconds, distanceInKm);
+    
+    const paceSeconds = timeInSeconds / distanceInKm;
+    const paceMinutes = paceSeconds / 60;
+    
+    if (paceMinutes > MAX_VALID_PACE || paceMinutes < MIN_VALID_PACE) {
+        return "--:--";
+    }
+    
+    return pace;
+};
+
+const getRouteEndpoints = (coordinates: RouteCoordinate[]): RouteCoordinate[] => {
+    if (coordinates.length < 2) return coordinates;
+    
+    return [
+        {
+            ...coordinates[0],
+            latitude: Number(coordinates[0].latitude.toFixed(6)),
+            longitude: Number(coordinates[0].longitude.toFixed(6)),
+            timestamp: coordinates[0].timestamp
+        },
+        {
+            ...coordinates[coordinates.length - 1],
+            latitude: Number(coordinates[coordinates.length - 1].latitude.toFixed(6)),
+            longitude: Number(coordinates[coordinates.length - 1].longitude.toFixed(6)),
+            timestamp: coordinates[coordinates.length - 1].timestamp
+        }
+    ];
 };
 
 const RunningScreen = () => {
@@ -73,7 +110,6 @@ const RunningScreen = () => {
         averageSpeed: 0,
         distance: 0,
         duration: 0,
-        steps: 0,
         startTime: formatLocalTime(new Date()),
         rawStartTime: new Date().toISOString(),
         lastAverageUpdate: Date.now(),
@@ -89,7 +125,7 @@ const RunningScreen = () => {
         distance: 0,
         duration: "",
         averagePace: "",
-        steps: 0,
+        averageSpeed: 0,
     });
     const { saveRun, saving } = useFetch("");
 
@@ -105,6 +141,11 @@ const RunningScreen = () => {
     const speedReadings = useRef<number[]>([]);
 
     const router = useRouter();
+    
+    const { addRun } = useRunHistory();
+
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
 
     const updateWorkoutStats = (
         newLocation: Location.LocationObjectCoords,
@@ -129,44 +170,49 @@ const RunningScreen = () => {
         );
         const totalDuration = (currentTime - startTimeRef.current) / 1000;
 
+        let currentSpeed = 0;
         if (newDistance >= MIN_DISTANCE_FOR_PACE && newDistance < 0.1) {
-            const currentSpeed = calculateSpeed(timeElapsed, newDistance);
-
-            if (currentSpeed > 0) {
-                speedReadings.current.push(currentSpeed);
-                if (speedReadings.current.length > PACE_AVERAGE_WINDOW) {
-                    speedReadings.current.shift();
-                }
-            }
-
-            setWorkoutStats((prev) => {
-                const updatedDistance = prev.distance + newDistance;
-                const smoothCurrentSpeed =
-                    speedReadings.current.length > 0
-                        ? speedReadings.current.reduce((a, b) => a + b) /
-                          speedReadings.current.length
-                        : 0;
-
-                const shouldUpdateAverage =
-                    currentTime - prev.lastAverageUpdate >= UPDATE_INTERVAL;
-                const averageSpeed = shouldUpdateAverage
-                    ? calculateAverageSpeed(updatedDistance, totalDuration)
-                    : prev.averageSpeed;
-
-                return {
-                    ...prev,
-                    currentSpeed: Number(smoothCurrentSpeed.toFixed(1)),
-                    averageSpeed: shouldUpdateAverage
-                        ? Number(averageSpeed.toFixed(1))
-                        : prev.averageSpeed,
-                    distance: updatedDistance,
-                    duration: totalDuration,
-                    lastAverageUpdate: shouldUpdateAverage
-                        ? currentTime
-                        : prev.lastAverageUpdate,
-                };
-            });
+            currentSpeed = calculateSpeed(timeElapsed, newDistance);
+        } else {
+            const lastSpeed =
+                speedReadings.current[speedReadings.current.length - 1] || 0;
+            currentSpeed = Math.max(0, lastSpeed * 0.8);
         }
+
+        if (speedReadings.current.length > 0 || currentSpeed > 0) {
+            speedReadings.current.push(currentSpeed);
+            if (speedReadings.current.length > PACE_AVERAGE_WINDOW) {
+                speedReadings.current.shift();
+            }
+        }
+
+        setWorkoutStats((prev) => {
+            const updatedDistance = prev.distance + newDistance;
+            const smoothCurrentSpeed =
+                speedReadings.current.length > 0
+                    ? speedReadings.current.reduce((a, b) => a + b) /
+                      speedReadings.current.length
+                    : 0;
+
+            const shouldUpdateAverage =
+                currentTime - prev.lastAverageUpdate >= UPDATE_INTERVAL;
+            const averageSpeed = shouldUpdateAverage
+                ? calculateAverageSpeed(updatedDistance, totalDuration)
+                : prev.averageSpeed;
+
+            return {
+                ...prev,
+                currentSpeed: Number(smoothCurrentSpeed.toFixed(1)),
+                averageSpeed: shouldUpdateAverage
+                    ? Number(averageSpeed.toFixed(1))
+                    : prev.averageSpeed,
+                distance: updatedDistance,
+                duration: totalDuration,
+                lastAverageUpdate: shouldUpdateAverage
+                    ? currentTime
+                    : prev.lastAverageUpdate,
+            };
+        });
 
         lastLocationRef.current = newLocation;
         lastUpdateTimeRef.current = currentTime;
@@ -174,6 +220,8 @@ const RunningScreen = () => {
 
     const startTracking = async () => {
         try {
+            await backgroundLocationService.clearSavedLocations();
+            
             const { status } =
                 await Location.requestForegroundPermissionsAsync();
             if (status !== "granted") {
@@ -183,12 +231,16 @@ const RunningScreen = () => {
                 );
                 return;
             }
+            
+            await backgroundLocationService.registerBackgroundTask();
 
             const now = new Date();
             const formattedStartTime = formatLocalTime(now);
 
             setWorkoutStats((prev) => ({
                 ...prev,
+                currentSpeed: 0,
+                averageSpeed: 0,
                 currentPace: 0,
                 averagePace: 0,
                 distance: 0,
@@ -276,6 +328,8 @@ const RunningScreen = () => {
             );
             return;
         }
+        
+        await backgroundLocationService.unregisterBackgroundTask();
 
         locationSubscription.current?.remove();
         pedometerSubscription.current?.remove();
@@ -288,14 +342,6 @@ const RunningScreen = () => {
 
             const timeElapsed = formatDuration(workoutStats.duration);
 
-            const currentSpeed =
-                workoutStats.currentSpeed > 0
-                    ? 60 / workoutStats.currentSpeed
-                    : 0;
-            const averageSpeed =
-                workoutStats.averageSpeed > 0
-                    ? 60 / workoutStats.averageSpeed
-                    : 0;
 
             const workoutData = {
                 startTime: workoutStats.startTime,
@@ -304,27 +350,40 @@ const RunningScreen = () => {
                 duration: formatDuration(workoutStats.duration),
 
                 distance: Number(workoutStats.distance.toFixed(2)),
-                speed: Number(currentSpeed.toFixed(2)),
-                averageSpeed: Number(averageSpeed.toFixed(2)),
-                currentSpeed: workoutStats.currentSpeed,
+                speed: workoutStats.currentSpeed,
+                currentSpeed: Number(workoutStats.currentSpeed.toFixed(1)),
+                averageSpeed: calculateAverageSpeed(
+                    workoutStats.distance,
+                    workoutStats.duration
+                ),
 
-                currentPace: formatPace(workoutStats.currentSpeed),
-                averagePace: formatPace(workoutStats.averageSpeed),
-
-                steps: workoutStats.steps,
-                route: routeCoordinates.map((coord) => ({
-                    ...coord,
-                    timestamp: formatDateTime(
-                        new Date(coord.timestamp || Date.now())
-                    ),
+                currentPace: calculateCurrentPace(
+                    workoutStats.duration,
+                    workoutStats.distance
+                ),
+                averagePace: calculateCurrentPace(
+                    workoutStats.duration,
+                    workoutStats.distance
+                ),
+                steps: 1,
+                route: getRouteEndpoints(routeCoordinates).map(coord => ({
+                    latitude: Number(coord.latitude.toFixed(6)),
+                    longitude: Number(coord.longitude.toFixed(6)),
+                    timestamp: formatDateTime(new Date(coord.timestamp || Date.now()))
                 })),
             };
-
+            
             setWorkoutCompleteData(workoutData);
             setShowCompleteModal(true);
 
             try {
                 await saveRun(user.uid, workoutData);
+                addRun({
+                    date: new Date().toISOString().slice(0, 10), // 'YYYY-MM-DD'
+                    distance: Number(workoutStats.distance.toFixed(2)),
+                    speed: workoutStats.currentSpeed,
+                    duration: workoutStats.duration/60,
+                });
             } catch (error) {
                 ErrorModalEmitter.emit(
                     "SHOW_ERROR",
@@ -347,12 +406,34 @@ const RunningScreen = () => {
         mapRef.current?.animateToRegion(newRegion, 1000);
     };
 
+    const animateStats = () => {
+        fadeAnim.setValue(0);
+        slideAnim.setValue(20);
+
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
     useEffect(() => {
         return () => {
             locationSubscription.current?.remove();
             pedometerSubscription.current?.remove();
             if (timerRef.current) clearInterval(timerRef.current);
         };
+    }, []);
+
+    useEffect(() => {
+        animateStats();
     }, []);
 
     return (
@@ -409,50 +490,70 @@ const RunningScreen = () => {
                 )}
             </MapView>
 
-            <View style={styles.statsContainer}>
+            <Animated.View
+                style={[
+                    styles.statsContainer,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    },
+                ]}
+            >
                 <View style={styles.statRow}>
                     <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>DISTANCE</Text>
-                        <Text style={styles.statValue}>
-                            {workoutStats.distance.toFixed(2)}
-                            <Text style={styles.statUnit}> km</Text>
-                        </Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>TIME</Text>
-                        <Text style={styles.statValue}>
-                            {formatDuration(workoutStats.duration)}
-                        </Text>
-                    </View>
-                </View>
-                <View style={styles.statRow}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>CURRENT SPEED</Text>
-                        <Text style={styles.statValue}>
-                            {workoutStats.currentSpeed.toFixed(1)}
-                            <Text style={styles.statUnit}> km/h</Text>
-                        </Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>AVG SPEED</Text>
-                        <Text style={styles.statValue}>
-                            {workoutStats.averageSpeed.toFixed(1)}
-                            <Text style={styles.statUnit}> km/h</Text>
-                        </Text>
-                        {workoutStats.distance < MIN_TOTAL_DISTANCE && (
-                            <Text style={styles.paceNote}>
-                                Starts after{" "}
-                                {(MIN_TOTAL_DISTANCE * 1000).toFixed(0)}m
+                        <View style={styles.iconContainer}>
+                            <MaterialIcons
+                                name="directions-run"
+                                size={20}
+                                color="#fff"
+                            />
+                        </View>
+                        <View style={styles.statValueContainer}>
+                            <Text style={styles.statValue}>
+                                {workoutStats.distance.toFixed(1)}
                             </Text>
-                        )}
+                            <Text style={styles.statUnit}>Km</Text>
+                        </View>
+                        <Text style={styles.statLabel}>Distance</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <View style={styles.iconContainer}>
+                            <MaterialIcons
+                                name="timer"
+                                size={20}
+                                color="#fff"
+                            />
+                        </View>
+                        <View style={styles.statValueContainer}>
+                            <Text style={styles.statValue}>
+                                {formatDuration(workoutStats.duration)}
+                            </Text>
+                        </View>
+                        <Text style={styles.statLabel}>Duration</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <View style={styles.iconContainer}>
+                            <MaterialIcons
+                                name="speed"
+                                size={20}
+                                color="#fff"
+                            />
+                        </View>
+                        <View style={styles.statValueContainer}>
+                            <Text style={styles.statValue}>
+                                {workoutStats.currentSpeed.toFixed(1)}
+                            </Text>
+                            <Text style={styles.statUnit}>km/h</Text>
+                        </View>
+                        <Text style={styles.statLabel}>Speed</Text>
                     </View>
                 </View>
-            </View>
+            </Animated.View>
 
             <TouchableOpacity
                 style={[
                     styles.fab,
-                    { backgroundColor: isTracking ? "#FF4B4B" : "#00B04D" },
+                    { backgroundColor: isTracking ? "#FF4B4B" : "#7F8CAA" },
                 ]}
                 onPress={() => (isTracking ? stopTracking() : startTracking())}
             >
@@ -475,59 +576,58 @@ const RunningScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
+        backgroundColor: "#333446",
     },
     map: {
         flex: 1,
     },
     statsContainer: {
         position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        padding: 20,
-        paddingTop: Platform.OS === "ios" ? 50 : 20,
+        top: 50,
+        left: 16,
+        right: 16,
+        backgroundColor: "#7F8CAA",
+        borderRadius: 15,
+        padding: 15,
     },
     statRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginBottom: 15,
     },
     statItem: {
         flex: 1,
         alignItems: "center",
+        paddingHorizontal: 8,
     },
-    statLabel: {
-        color: "#888",
-        fontSize: 12,
-        fontWeight: "600",
+    iconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#B8CFCE",
+        alignItems: "center",
+        justifyContent: "center",
         marginBottom: 4,
+    },
+    statValueContainer: {
+        flexDirection: "row",
+        alignItems: "baseline",
+        marginVertical: 4,
     },
     statValue: {
         color: "#fff",
         fontSize: 24,
-        fontWeight: "700",
+        fontWeight: "600",
     },
     statUnit: {
-        fontSize: 16,
-        color: "#888",
+        color: "#fff",
+        fontSize: 14,
+        marginLeft: 4,
+        opacity: 0.8,
     },
-    speedValue: {
-        color: "#888",
-        fontSize: 10,
-        marginTop: 2,
-        textAlign: "center",
-    },
-    speedUnit: {
-        fontSize: 10,
-        color: "#888",
-    },
-    paceNote: {
-        color: "#888",
-        fontSize: 10,
-        marginTop: 2,
-        textAlign: "center",
+    statLabel: {
+        color: "#fff",
+        fontSize: 12,
+        opacity: 0.8,
     },
     fab: {
         position: "absolute",

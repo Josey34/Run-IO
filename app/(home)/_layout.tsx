@@ -71,6 +71,7 @@ export default function HomeLayout() {
 
                         return (
                             <Pressable
+                                testID={`tab-${route.name}`}
                                 key={route.key}
                                 style={styles.tabButton}
                                 onPress={() => {
@@ -129,7 +130,7 @@ const getIconName = (routeName: string, isFocused: boolean): string => {
     const icons: { [key: string]: string } = {
         index: isFocused ? "home-sharp" : "home-outline",
         statistics_screen: isFocused ? "stats-chart" : "stats-chart-outline",
-        running_screen: isFocused ? "fitness" : "fitness-outline",
+        running_screen: isFocused ? "walk" : "walk-outline",
         challenge_screen: isFocused ? "trophy" : "trophy-outline",
     };
     return icons[routeName];
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         height: 65,
-        backgroundColor: "#F3F4F6",
+        backgroundColor: "#EAEFEF",
         borderRadius: 20,
         padding: 10,
         elevation: 4,
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         width: TAB_WIDTH - 20,
         height: 45,
-        backgroundColor: "#007AFF",
+        backgroundColor: "#7F8CAA",
         borderRadius: 15,
         top: 10,
         left: 20,

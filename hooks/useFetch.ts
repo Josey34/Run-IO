@@ -52,7 +52,6 @@ interface RunData {
     averageSpeed: number;
     currentPace: string;
     averagePace: string;
-    steps: number;
     route: Array<{
         latitude: number;
         longitude: number;

@@ -106,6 +106,7 @@ const FormDataScreen: React.FC = () => {
 
                 <Text style={styles.inputText}>Age:</Text>
                 <TextInput
+                    testID="age-input"
                     style={styles.input}
                     value={age}
                     onChangeText={setAge}
@@ -115,6 +116,7 @@ const FormDataScreen: React.FC = () => {
 
                 <Text style={styles.inputText}>Weight:</Text>
                 <TextInput
+                    testID="weight-input"
                     style={styles.input}
                     value={weight}
                     onChangeText={setWeight}
@@ -126,6 +128,7 @@ const FormDataScreen: React.FC = () => {
 
                 <Text style={styles.inputText}>Height:</Text>
                 <TextInput
+                    testID="height-input"
                     style={styles.input}
                     value={height}
                     onChangeText={setHeight}
@@ -141,9 +144,9 @@ const FormDataScreen: React.FC = () => {
                     onValueChange={(itemValue) => setGender(itemValue)}
                     style={styles.picker}
                 >
-                    <Picker.Item label="Pick your gender" value="" />
-                    <Picker.Item label="Man" value="man" />
-                    <Picker.Item label="Woman" value="woman" />
+                    <Picker.Item label="Pick your gender" value="" testID="gender-picker" />
+                    <Picker.Item label="Man" value="man" testID="gender-man-picker" />
+                    <Picker.Item label="Woman" value="woman" testID="gender-woman-picker" />
                 </Picker>
                 {errors.gender && (
                     <Text style={styles.error}>{errors.gender}</Text>
@@ -153,6 +156,7 @@ const FormDataScreen: React.FC = () => {
                     title={"PROCESS"}
                     onPress={handleSubmit}
                     disabled={isLoading}
+                    testID="process-button"
                 />
             </View>
 
@@ -169,6 +173,7 @@ const FormDataScreen: React.FC = () => {
                     <View style={styles.modalView}>
                         <Text style={styles.modalText}>{modalMessage}</Text>
                         <Pressable
+                            testID="close-modal-button"
                             style={[styles.button, styles.buttonClose]}
                             onPress={() => setModalVisible(!modalVisible)}
                         >
@@ -185,18 +190,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: "#000",
+        backgroundColor: "#7F8CAA",
     },
     wrapper: {
         height: "100%",
-        backgroundColor: "#2d2d2d",
+        backgroundColor: "#333446",
         padding: 30,
         borderRadius: 15,
     },
     title: {
         marginTop: 80,
         fontSize: 24,
-        color: "#fff",
+        color: "#EAEFEF",
         marginBottom: 10,
         textAlign: "center",
         fontWeight: "bold",
@@ -211,7 +216,7 @@ const styles = StyleSheet.create({
         width: "100%",
         padding: 10,
         borderRadius: 5,
-        backgroundColor: "#fff",
+        backgroundColor: "#B8CFCE",
         marginBottom: 15,
     },
     inputText: {
@@ -236,7 +241,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         margin: 20,
-        backgroundColor: "white",
+        backgroundColor: "#EAEFEF",
         borderRadius: 20,
         padding: 35,
         alignItems: "center",
@@ -255,7 +260,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     buttonClose: {
-        backgroundColor: "#2196F3",
+        backgroundColor: "#7F8CAA",
     },
     textStyle: {
         color: "white",
