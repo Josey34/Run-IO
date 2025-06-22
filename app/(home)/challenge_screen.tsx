@@ -102,8 +102,8 @@ const ChallengeScreen = () => {
     const { runHistory } = useRunHistory();
 
     const filters = ["All", "On Going", "Completed"];
-    
     const RESET_KEY = "challenge_last_reset_date";
+    const PROGRESS_KEY = "challenge_progress_for_today";
 
     const [singleMetricChallenges, setSingleMetricChallenges] = useState<
         SingleMetricChallenge[]
@@ -143,7 +143,7 @@ const ChallengeScreen = () => {
             })
         );
     }, [runHistory]);
-    
+
     useEffect(() => {
         const parentIds = [
             ...new Set(singleMetricChallenges.map((c) => c.id)),
@@ -161,22 +161,76 @@ const ChallengeScreen = () => {
             }
         });
     }, [singleMetricChallenges]);
-    
+
+    // Helper to get today's date string
+    const getToday = () => new Date().toISOString().slice(0, 10);
+
+    // Save progress to AsyncStorage
+    const saveProgress = async (progress: SingleMetricChallenge[]) => {
+        const today = getToday();
+        const data = progress.map(({ singleMetricId, singleCompleted }) => ({
+            singleMetricId,
+            singleCompleted,
+        }));
+        await AsyncStorage.setItem(
+            `${PROGRESS_KEY}_${today}`,
+            JSON.stringify(data)
+        );
+    };
+
+    // Load progress from AsyncStorage
+    const loadProgress = async (): Promise<Record<string, boolean>> => {
+        const today = getToday();
+        const raw = await AsyncStorage.getItem(`${PROGRESS_KEY}_${today}`);
+        if (!raw) return {};
+        try {
+            const arr = JSON.parse(raw);
+            return arr.reduce(
+                (acc: Record<string, boolean>, cur: any) => {
+                    acc[cur.singleMetricId] = cur.singleCompleted;
+                    return acc;
+                },
+                {}
+            );
+        } catch {
+            return {};
+        }
+    };
+
+    // On mount, check for reset and load progress
     useEffect(() => {
-        const resetIfNewDay = async () => {
-            const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+        const init = async () => {
+            const today = getToday();
             const lastReset = await AsyncStorage.getItem(RESET_KEY);
 
             if (lastReset !== today) {
+                // New day: reset progress
                 setSingleMetricChallenges((prev) =>
                     prev.map((c) => ({ ...c, singleCompleted: false }))
                 );
                 await AsyncStorage.setItem(RESET_KEY, today);
+                await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
+            } else {
+                // Same day: load progress
+                const stored = await loadProgress();
+                setSingleMetricChallenges((prev) =>
+                    prev.map((c) =>
+                        stored[c.singleMetricId] !== undefined
+                            ? { ...c, singleCompleted: stored[c.singleMetricId] }
+                            : c
+                    )
+                );
             }
         };
-
-        resetIfNewDay();
+        init();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Save progress whenever it changes
+    useEffect(() => {
+        saveProgress(singleMetricChallenges);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [singleMetricChallenges]);
 
     // Add new animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;

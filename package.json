@@ -11,7 +11,8 @@
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
     "test": "jest --watchAll",
-    "e2e": "mocha tests/e2e/*.js"
+    "e2e": "mocha tests/e2e/*.js",
+    "appium-testing": "appium --allow-insecure=adb_shell"
   },
   "jest": {
     "preset": "jest-expo"
