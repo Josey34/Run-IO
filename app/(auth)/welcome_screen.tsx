@@ -23,6 +23,7 @@ export default function WelcomeScreen() {
                     you're gonna get.
                 </Text>
                 <TouchableOpacity
+                    testID="start-running-button"
                     style={styles.button}
                     onPress={() => router.push("/(auth)/login_screen")}
                 >

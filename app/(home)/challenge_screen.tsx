@@ -1,4 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -12,6 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useRunHistory } from "../../hooks/runHistoryContext";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import CustomModal from "../components/CustomModal";
@@ -25,6 +27,49 @@ interface Challenge {
     duration: number;
     completed: boolean;
 }
+
+interface SingleMetricChallenge extends Challenge {
+    metricType: "Distance" | "Speed" | "Duration";
+    value: any;
+    unit: string;
+    icon: string;
+    singleMetricId: string;
+    singleCompleted: boolean;
+}
+
+const splitChallenges = (challenges: Challenge[]): SingleMetricChallenge[] => {
+    const result: SingleMetricChallenge[] = [];
+    challenges.forEach((c) => {
+        result.push({
+            ...c,
+            metricType: "Distance",
+            value: c.distance.toFixed(1),
+            unit: "km",
+            icon: "map-marker-distance",
+            singleMetricId: `${c.id}-distance`,
+            singleCompleted: false,
+        });
+        result.push({
+            ...c,
+            metricType: "Speed",
+            value: c.speed.toFixed(2),
+            unit: "km/h",
+            icon: "speedometer",
+            singleMetricId: `${c.id}-speed`,
+            singleCompleted: false,
+        });
+        result.push({
+            ...c,
+            metricType: "Duration",
+            value: c.duration.toFixed(2),
+            unit: "min",
+            icon: "timer-outline",
+            singleMetricId: `${c.id}-duration`,
+            singleCompleted: false,
+        });
+    });
+    return result;
+};
 
 const ChallengeScreen = () => {
     const { user } = useAuth();
@@ -54,14 +99,172 @@ const ChallengeScreen = () => {
         (challenge: Challenge): boolean => challenge?.userId === user?.uid
     );
 
-    const filters = ["All", "On Going", "Completed"];
+    const { runHistory } = useRunHistory();
 
-    const filteredChallenges = userChallenges.filter((challenge) => {
+    const filters = ["All", "On Going", "Completed"];
+    const RESET_KEY = "challenge_last_reset_date";
+    const PROGRESS_KEY = "challenge_progress_for_today";
+
+    const [singleMetricChallenges, setSingleMetricChallenges] = useState<
+        SingleMetricChallenge[]
+    >(splitChallenges(userChallenges));
+    const [progressLoaded, setProgressLoaded] = useState(false);
+
+    const areAllMetricsCompleted = (parentId: number) => {
+        return (
+            singleMetricChallenges.filter(
+                (c) => c.id === parentId && c.singleCompleted
+            ).length === 3
+        );
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadAndMerge = async () => {
+            const today = getToday();
+            const lastReset = await AsyncStorage.getItem(RESET_KEY);
+
+            let baseChallenges = splitChallenges(userChallenges);
+
+            if (lastReset !== today) {
+                await AsyncStorage.setItem(RESET_KEY, today);
+                await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
+                if (isMounted) {
+                    setSingleMetricChallenges(baseChallenges);
+                    setProgressLoaded(true);
+                }
+            } else {
+                const stored = await loadProgress();
+                if (isMounted) {
+                    setSingleMetricChallenges(
+                        baseChallenges.map((c) =>
+                            stored[c.singleMetricId] !== undefined
+                                ? { ...c, singleCompleted: stored[c.singleMetricId] }
+                                : c
+                        )
+                    );
+                    setProgressLoaded(true);
+                }
+            }
+        };
+        loadAndMerge();
+        return () => { isMounted = false; };
+    }, [userChallenges.length]);
+
+    const filteredChallenges = singleMetricChallenges.filter((challenge) => {
         if (filter === "All") return true;
         return filter === "Completed"
-            ? challenge.completed
-            : !challenge.completed;
+            ? challenge.singleCompleted
+            : !challenge.singleCompleted;
     });
+
+    useEffect(() => {
+        setSingleMetricChallenges((prev) =>
+            prev.map((c) => {
+                const progress = getChallengeProgress(c);
+                if (!c.singleCompleted && progress >= 1) {
+                    return { ...c, singleCompleted: true };
+                }
+                // Optionally, if you want to auto-uncomplete if progress drops below 1:
+                // if (c.singleCompleted && progress < 1) {
+                //     return { ...c, singleCompleted: false };
+                // }
+                return c;
+            })
+        );
+    }, [runHistory]);
+
+    useEffect(() => {
+        const parentIds = [
+            ...new Set(singleMetricChallenges.map((c) => c.id)),
+        ];
+
+        parentIds.forEach((parentId) => {
+            const allCompleted = singleMetricChallenges.filter(
+                (c) => c.id === parentId && c.singleCompleted
+            ).length === 3;
+
+            const parentChallenge = challenges.find((ch) => ch.id === parentId);
+
+            if (parentChallenge && parentChallenge.completed !== allCompleted) {
+                updateChallenge(parentId, allCompleted);
+            }
+        });
+    }, [singleMetricChallenges]);
+
+    // Helper to get today's date string
+    const getToday = () => new Date().toISOString().slice(0, 10);
+
+    // Save progress to AsyncStorage
+    const saveProgress = async (progress: SingleMetricChallenge[]) => {
+        const today = getToday();
+        const data = progress.map(({ singleMetricId, singleCompleted }) => ({
+            singleMetricId,
+            singleCompleted,
+        }));
+        await AsyncStorage.setItem(
+            `${PROGRESS_KEY}_${today}`,
+            JSON.stringify(data)
+        );
+    };
+
+    // Load progress from AsyncStorage
+    const loadProgress = async (): Promise<Record<string, boolean>> => {
+        const today = getToday();
+        const raw = await AsyncStorage.getItem(`${PROGRESS_KEY}_${today}`);
+        if (!raw) return {};
+        try {
+            const arr = JSON.parse(raw);
+            return arr.reduce(
+                (acc: Record<string, boolean>, cur: any) => {
+                    acc[cur.singleMetricId] = cur.singleCompleted;
+                    return acc;
+                },
+                {}
+            );
+        } catch {
+            return {};
+        }
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadAndMerge = async () => {
+            const today = getToday();
+            const lastReset = await AsyncStorage.getItem(RESET_KEY);
+
+            let baseChallenges = splitChallenges(userChallenges);
+
+            if (lastReset !== today) {
+                await AsyncStorage.setItem(RESET_KEY, today);
+                await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
+                if (isMounted) {
+                    setSingleMetricChallenges(baseChallenges);
+                    setProgressLoaded(true);
+                }
+            } else {
+                const stored = await loadProgress();
+                if (isMounted) {
+                    setSingleMetricChallenges(
+                        baseChallenges.map((c) =>
+                            stored[c.singleMetricId] !== undefined
+                                ? { ...c, singleCompleted: stored[c.singleMetricId] }
+                                : c
+                        )
+                    );
+                    setProgressLoaded(true);
+                }
+            }
+        };
+        loadAndMerge();
+        return () => { isMounted = false; };
+    }, [userChallenges.length]);
+
+    useEffect(() => {
+        if (progressLoaded) {
+            saveProgress(singleMetricChallenges);
+        }
+    }, [singleMetricChallenges, progressLoaded]);
 
     // Add new animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -101,7 +304,7 @@ const ChallengeScreen = () => {
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
         }).start();
-    }, [filter])
+    }, [filter]);
 
     const buttonPressAnimation = () => {
         Animated.sequence([
@@ -157,39 +360,59 @@ const ChallengeScreen = () => {
     };
 
     const handleUpdateChallenge = async (
-        challengeId: number,
+        singleMetricId: string,
         completed: boolean
     ) => {
-        try {
-            const success = await updateChallenge(challengeId, completed);
-            if (success) {
-                showModal(
-                    `Challenge ${
-                        completed ? "completed" : "cancelled"
-                    } successfully!`
-                );
-            } else {
-                showModal(
-                    "Failed to update challenge status. Please try again."
-                );
-            }
-        } catch (error) {
-            showModal("Failed to update challenge status. Please try again.");
-            console.error("Error updating challenge:", error);
-        }
+        setSingleMetricChallenges((prev) =>
+            prev.map((c) =>
+                c.singleMetricId === singleMetricId
+                    ? { ...c, singleCompleted: completed }
+                    : c
+            )
+        );
+        showModal(
+            `Challenge ${completed ? "completed" : "cancelled"} successfully!`
+        );
     };
 
-    const handleComplete = (challengeId: number) => {
+    const handleComplete = (singleMetricId: string) => {
         showModal(
             "Are you sure you want to mark this challenge as completed?",
-            () => handleUpdateChallenge(challengeId, true)
+            () => handleUpdateChallenge(singleMetricId, true)
         );
     };
 
-    const handleCancel = (challengeId: number) => {
-        showModal("Are you sure you want to cancel this challenge?", () =>
-            handleUpdateChallenge(challengeId, false)
+    const handleCancel = (singleMetricId: string) => {
+        showModal("Are you sure you want to un-complete this challenge?", () =>
+            handleUpdateChallenge(singleMetricId, false)
         );
+    };
+
+    const getChallengeProgress = (challenge: SingleMetricChallenge) => {
+        if (runHistory.length === 0) return 0;
+
+        if (challenge.metricType === "Distance") {
+            const totalDistance = runHistory.reduce(
+                (sum, run) => sum + run.distance,
+                0
+            );
+            return Math.min(totalDistance / challenge.distance, 1);
+        }
+
+        if (challenge.metricType === "Duration") {
+            const totalDuration = runHistory.reduce(
+                (sum, run) => sum + run.duration,
+                0
+            );
+            return Math.min(totalDuration / challenge.duration, 1);
+        }
+
+        if (challenge.metricType === "Speed") {
+            const latestRun = runHistory[runHistory.length - 1];
+            return Math.min(latestRun.speed / challenge.speed, 1);
+        }
+
+        return 0;
     };
 
     return (
@@ -213,13 +436,13 @@ const ChallengeScreen = () => {
                     ) : (
                         <Text style={styles.progressText}>
                             {
-                                userChallenges.filter(
-                                    (challenge) => challenge.completed
+                                singleMetricChallenges.filter(
+                                    (challenge) => challenge.singleCompleted
                                 ).length
                             }
                             <Text style={{ color: "#000", fontSize: 18 }}>
                                 {" "}
-                                / {userChallenges.length}
+                                / {singleMetricChallenges.length}
                             </Text>
                         </Text>
                     )}
@@ -237,6 +460,7 @@ const ChallengeScreen = () => {
                 />
                 {filters.map((option) => (
                     <TouchableOpacity
+                        testID={`filter-button-${option}`}
                         key={option}
                         style={styles.filterButton}
                         onPress={() => setFilter(option)}
@@ -256,7 +480,9 @@ const ChallengeScreen = () => {
             </View>
 
             {/* Challenge List */}
-            {loading && !refreshing ? (
+            {!progressLoaded ? (
+                <ActivityIndicator size="large" color="#007bff" style={styles.loadingIndicator} />
+            ) : loading && !refreshing ? (
                 <ActivityIndicator
                     size="large"
                     color="#007bff"
@@ -265,8 +491,8 @@ const ChallengeScreen = () => {
             ) : (
                 <FlatList
                     data={filteredChallenges}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item, index }) => (
+                    keyExtractor={(item) => item.singleMetricId}
+                    renderItem={({ item }) => (
                         <Animated.View
                             style={[
                                 { flexDirection: "row", marginBottom: 20 },
@@ -283,7 +509,10 @@ const ChallengeScreen = () => {
                                 },
                             ]}
                         >
-                            <View style={styles.challengeItem}>
+                            <View
+                                style={styles.challengeItem}
+                                testID={`challenge-${item.singleMetricId}`}
+                            >
                                 <Animated.View
                                     style={[
                                         styles.iconContainer,
@@ -296,31 +525,47 @@ const ChallengeScreen = () => {
                                         },
                                     ]}
                                 >
-                                    <Ionicons
-                                        name="fitness"
-                                        size={20}
+                                    <MaterialCommunityIcons
+                                        name={item.icon}
+                                        size={24}
                                         color="#fff"
                                     />
                                 </Animated.View>
                                 <View style={styles.challengeInfo}>
-                                    <View style={styles.infoTop}>
-                                        <Text style={styles.challengeType}>
-                                            {item.type}
-                                        </Text>
-                                        <Text style={styles.challengeDistance}>
-                                            {item?.distance?.toFixed(2)} km
-                                        </Text>
-                                    </View>
-                                    <View style={styles.separator} />
-                                    <View style={styles.infoBottom}>
-                                        <Text style={styles.challengeDetails}>
-                                            Speed: {item?.speed?.toFixed(2)}{" "}
-                                            km/h
-                                        </Text>
-                                        <Text style={styles.challengeDetails}>
-                                            Duration:{" "}
-                                            {item?.duration?.toFixed(0)} min
-                                        </Text>
+                                    <Text style={styles.challengeType}>
+                                        {item.metricType} Challenge
+                                    </Text>
+                                    <Text style={styles.statValue}>
+                                        {item.value} {item.unit}
+                                    </Text>
+                                    <View style={{ marginTop: 8 }}>
+                                        {getChallengeProgress(item) >= 1 ? (
+                                            <Text
+                                                style={{
+                                                    color: "#4CAF50",
+                                                    fontWeight: "bold",
+                                                    fontSize: 14,
+                                                }}
+                                            >
+                                                Completed
+                                            </Text>
+                                        ) : (
+                                            <View style={styles.progressBar}>
+                                                <View
+                                                    style={{
+                                                        width: `${
+                                                            getChallengeProgress(
+                                                                item
+                                                            ) * 100
+                                                        }%`,
+                                                        height: 8,
+                                                        backgroundColor:
+                                                            "#4CAF50",
+                                                        borderRadius: 4,
+                                                    }}
+                                                />
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
                             </View>
@@ -333,22 +578,23 @@ const ChallengeScreen = () => {
                                 <TouchableOpacity
                                     style={[
                                         styles.checkButton,
-                                        updatingChallengeId === item.id &&
+                                        item.singleCompleted &&
                                             styles.buttonDisabled,
                                     ]}
                                     onPress={() => {
                                         buttonPressAnimation();
-                                        handleComplete(item.id);
+                                        handleComplete(item.singleMetricId);
                                     }}
-                                    disabled={updatingChallengeId === item.id}
                                 >
-                                    {updatingChallengeId === item.id ? (
-                                        <ActivityIndicator
-                                            size="small"
+                                    {item.singleCompleted ? (
+                                        <Ionicons
+                                            name="checkmark-done"
+                                            size={18}
                                             color="#fff"
                                         />
                                     ) : (
                                         <Ionicons
+                                            testID="checkmark-button"
                                             name="checkmark"
                                             size={18}
                                             color="#fff"
@@ -356,29 +602,18 @@ const ChallengeScreen = () => {
                                     )}
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={[
-                                        styles.cancelButton,
-                                        updatingChallengeId === item.id &&
-                                            styles.buttonDisabled,
-                                    ]}
+                                    style={[styles.cancelButton]}
                                     onPress={() => {
                                         buttonPressAnimation();
-                                        handleCancel(item.id);
+                                        handleCancel(item.singleMetricId);
                                     }}
-                                    disabled={updatingChallengeId === item.id}
                                 >
-                                    {updatingChallengeId === item.id ? (
-                                        <ActivityIndicator
-                                            size="small"
-                                            color="#fff"
-                                        />
-                                    ) : (
-                                        <Ionicons
-                                            name="close"
-                                            size={18}
-                                            color="#fff"
-                                        />
-                                    )}
+                                    <Ionicons
+                                        testID="cancel-button"
+                                        name="close"
+                                        size={18}
+                                        color="#fff"
+                                    />
                                 </TouchableOpacity>
                             </Animated.View>
                         </Animated.View>
@@ -591,6 +826,40 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+    },
+    cardRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 10,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: "#fff",
+        borderRadius: 8,
+        padding: 10,
+        marginHorizontal: 3,
+        alignItems: "center",
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: "#7F8CAA",
+        marginTop: 4,
+    },
+    statValue: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#333",
+        marginTop: 2,
+    },
+    progressBar: {
+        height: 8,
+        backgroundColor: "#eee",
+        borderRadius: 4,
     },
 });
 

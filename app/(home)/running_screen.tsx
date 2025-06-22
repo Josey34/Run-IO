@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { mapStyle } from "../../constants/Map";
+import { useRunHistory } from "../../hooks/runHistoryContext";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
@@ -140,6 +141,8 @@ const RunningScreen = () => {
     const speedReadings = useRef<number[]>([]);
 
     const router = useRouter();
+    
+    const { addRun } = useRunHistory();
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(20)).current;
@@ -375,6 +378,12 @@ const RunningScreen = () => {
 
             try {
                 await saveRun(user.uid, workoutData);
+                addRun({
+                    date: new Date().toISOString().slice(0, 10), // 'YYYY-MM-DD'
+                    distance: Number(workoutStats.distance.toFixed(2)),
+                    speed: workoutStats.currentSpeed,
+                    duration: workoutStats.duration/60,
+                });
             } catch (error) {
                 ErrorModalEmitter.emit(
                     "SHOW_ERROR",

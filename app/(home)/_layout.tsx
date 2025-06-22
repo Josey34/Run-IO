@@ -71,6 +71,7 @@ export default function HomeLayout() {
 
                         return (
                             <Pressable
+                                testID={`tab-${route.name}`}
                                 key={route.key}
                                 style={styles.tabButton}
                                 onPress={() => {

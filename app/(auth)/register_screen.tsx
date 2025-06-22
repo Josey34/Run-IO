@@ -39,6 +39,7 @@ export default function RegisterScreen() {
 
                 <Text style={styles.inputTitle}>Username:</Text>
                 <TextInput
+                    testID="username-register-input"
                     style={styles.input}
                     value={username}
                     onChangeText={setUsername}
@@ -46,6 +47,7 @@ export default function RegisterScreen() {
 
                 <Text style={styles.inputTitle}>Email:</Text>
                 <TextInput
+                    testID="email-register-input"
                     style={styles.input}
                     value={email}
                     onChangeText={setEmail}
@@ -54,6 +56,7 @@ export default function RegisterScreen() {
 
                 <Text style={styles.inputTitle}>Password:</Text>
                 <TextInput
+                    testID="password-register-input"
                     style={styles.input}
                     secureTextEntry
                     value={password}
@@ -61,6 +64,7 @@ export default function RegisterScreen() {
                 />
 
                 <CustomButton
+                    testID="register-submit-button"
                     title="Register"
                     onPress={handleRegister}
                     disabled={isLoading}
