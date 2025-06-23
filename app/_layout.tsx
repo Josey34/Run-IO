@@ -10,8 +10,9 @@ import * as TaskManager from "expo-task-manager";
 import { useEffect, useState } from "react";
 import { enableScreens } from "react-native-screens";
 import { RunHistoryProvider } from "../hooks/runHistoryContext";
-import { AuthProvider } from "../hooks/useAuth";
+import { AuthProvider, useAuth } from "../hooks/useAuth";
 import useColorScheme from "../hooks/useColorScheme";
+import useFetch from "../hooks/useFetch";
 import { ErrorModalEmitter } from "./api/api_service";
 import ErrorModal from "./components/ErrorModal";
 import { backgroundLocationService } from "./utils/backgroundLocationService";
@@ -39,6 +40,16 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 });
 
 enableScreens();
+
+function ProvidersWrapper({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+    const { fetchRun } = useFetch("");
+    return (
+        <RunHistoryProvider userId={user?.uid} fetchRun={fetchRun}>
+            {children}
+        </RunHistoryProvider>
+    );
+}
 
 export default function Layout() {
     const { colorScheme } = useColorScheme();
@@ -70,9 +81,9 @@ export default function Layout() {
             >
                 <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
                 <AuthProvider>
-                    <RunHistoryProvider>
+                    <ProvidersWrapper>
                         <Slot />
-                    </RunHistoryProvider>
+                    </ProvidersWrapper>
                 </AuthProvider>
                 <ErrorModal
                     visible={errorVisible}

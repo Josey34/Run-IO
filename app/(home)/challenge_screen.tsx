@@ -1,7 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Animated,
@@ -17,6 +16,7 @@ import { useRunHistory } from "../../hooks/runHistoryContext";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import CustomModal from "../components/CustomModal";
+import { parseDurationToMinutes } from "../utils/timeFormat";
 
 interface Challenge {
     id: number;
@@ -82,102 +82,92 @@ const ChallengeScreen = () => {
         refetch,
         fetchFromBackend,
         updateChallenge,
+        fetchRun
     } = useFetch<Challenge>("");
 
     const [filter, setFilter] = useState("All");
     const translateX = useRef(new Animated.Value(0)).current;
-    const [updatingChallengeId, setUpdatingChallengeId] = useState<
-        number | null
-    >(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(
         null
     );
+    const { runHistory, refresh } = useRunHistory();
+    const [progressLoaded, setProgressLoaded] = useState(false);
 
-    const userChallenges: Challenge[] = challenges.filter(
-        (challenge: Challenge): boolean => challenge?.userId === user?.uid
+    const userChallenges = useMemo(() => 
+        challenges.filter((challenge: Challenge): boolean => challenge?.userId === user?.uid),
+        [challenges, user?.uid]
     );
 
-    const { runHistory } = useRunHistory();
+    const splitUserChallenges = useMemo(
+        () => splitChallenges(userChallenges),
+        [userChallenges]
+    );
 
     const filters = ["All", "On Going", "Completed"];
-    const RESET_KEY = "challenge_last_reset_date";
-    const PROGRESS_KEY = "challenge_progress_for_today";
 
     const [singleMetricChallenges, setSingleMetricChallenges] = useState<
         SingleMetricChallenge[]
-    >(splitChallenges(userChallenges));
-    const [progressLoaded, setProgressLoaded] = useState(false);
+    >([]);
 
-    const areAllMetricsCompleted = (parentId: number) => {
-        return (
-            singleMetricChallenges.filter(
-                (c) => c.id === parentId && c.singleCompleted
-            ).length === 3
-        );
-    };
+    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-    useEffect(() => {
-        let isMounted = true;
-        const loadAndMerge = async () => {
-            const today = getToday();
-            const lastReset = await AsyncStorage.getItem(RESET_KEY);
+    const todaysRuns = useMemo(() => 
+        runHistory.filter((run: any) => run.createdAt && run.createdAt.slice(0, 10) === today),
+        [runHistory, today]
+    );
 
-            let baseChallenges = splitChallenges(userChallenges);
+    const getChallengeProgress = useCallback((challenge: SingleMetricChallenge, runs: any[] = []) => {
+        if (runs.length === 0) return 0;
 
-            if (lastReset !== today) {
-                await AsyncStorage.setItem(RESET_KEY, today);
-                await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
-                if (isMounted) {
-                    setSingleMetricChallenges(baseChallenges);
-                    setProgressLoaded(true);
-                }
-            } else {
-                const stored = await loadProgress();
-                if (isMounted) {
-                    setSingleMetricChallenges(
-                        baseChallenges.map((c) =>
-                            stored[c.singleMetricId] !== undefined
-                                ? { ...c, singleCompleted: stored[c.singleMetricId] }
-                                : c
-                        )
-                    );
-                    setProgressLoaded(true);
-                }
-            }
-        };
-        loadAndMerge();
-        return () => { isMounted = false; };
-    }, [userChallenges.length]);
+        if (challenge.metricType === "Distance") {
+            const totalDistance = runs.reduce(
+                (sum, run) => sum + run.distance,
+                0
+            );
+            return Math.min(totalDistance / challenge.distance, 1);
+        }
 
-    const filteredChallenges = singleMetricChallenges.filter((challenge) => {
-        if (filter === "All") return true;
-        return filter === "Completed"
-            ? challenge.singleCompleted
-            : !challenge.singleCompleted;
-    });
+        if (challenge.metricType === "Duration") {
+            const totalDuration = runs.reduce(
+                (sum, run) => sum + parseDurationToMinutes(run.duration),
+                0
+            );
+            return Math.min(totalDuration / challenge.duration, 1);
+        }
+
+        if (challenge.metricType === "Speed") {
+            const latestRun = runs[runs.length - 1];
+            return Math.min(latestRun.speed / challenge.speed, 1);
+        }
+
+        return 0;
+    }, []);
 
     useEffect(() => {
-        setSingleMetricChallenges((prev) =>
-            prev.map((c) => {
-                const progress = getChallengeProgress(c);
-                if (!c.singleCompleted && progress >= 1) {
-                    return { ...c, singleCompleted: true };
-                }
-                // Optionally, if you want to auto-uncomplete if progress drops below 1:
-                // if (c.singleCompleted && progress < 1) {
-                //     return { ...c, singleCompleted: false };
-                // }
-                return c;
-            })
-        );
-    }, [runHistory]);
+        if (splitUserChallenges.length === 0) {
+            setSingleMetricChallenges([]);
+            setProgressLoaded(true);
+            return;
+        }
+
+        const updatedChallenges = splitUserChallenges.map((c) => {
+            const progress = getChallengeProgress(c, todaysRuns);
+            return {
+                ...c,
+                singleCompleted: progress >= 1,
+            };
+        });
+
+        setSingleMetricChallenges(updatedChallenges);
+        setProgressLoaded(true);
+    }, [splitUserChallenges, getChallengeProgress, todaysRuns]);
 
     useEffect(() => {
-        const parentIds = [
-            ...new Set(singleMetricChallenges.map((c) => c.id)),
-        ];
+        if (singleMetricChallenges.length === 0) return;
+
+        const parentIds = [...new Set(singleMetricChallenges.map((c) => c.id))];
 
         parentIds.forEach((parentId) => {
             const allCompleted = singleMetricChallenges.filter(
@@ -190,83 +180,15 @@ const ChallengeScreen = () => {
                 updateChallenge(parentId, allCompleted);
             }
         });
-    }, [singleMetricChallenges]);
+    }, [singleMetricChallenges, challenges, updateChallenge]);
 
-    // Helper to get today's date string
-    const getToday = () => new Date().toISOString().slice(0, 10);
+    const filteredChallenges = useMemo(() => {
+        if (filter === "All") return singleMetricChallenges;
+        if (filter === "On Going") return singleMetricChallenges.filter(c => !c.singleCompleted);
+        if (filter === "Completed") return singleMetricChallenges.filter(c => c.singleCompleted);
+        return singleMetricChallenges;
+    }, [singleMetricChallenges, filter]);
 
-    // Save progress to AsyncStorage
-    const saveProgress = async (progress: SingleMetricChallenge[]) => {
-        const today = getToday();
-        const data = progress.map(({ singleMetricId, singleCompleted }) => ({
-            singleMetricId,
-            singleCompleted,
-        }));
-        await AsyncStorage.setItem(
-            `${PROGRESS_KEY}_${today}`,
-            JSON.stringify(data)
-        );
-    };
-
-    // Load progress from AsyncStorage
-    const loadProgress = async (): Promise<Record<string, boolean>> => {
-        const today = getToday();
-        const raw = await AsyncStorage.getItem(`${PROGRESS_KEY}_${today}`);
-        if (!raw) return {};
-        try {
-            const arr = JSON.parse(raw);
-            return arr.reduce(
-                (acc: Record<string, boolean>, cur: any) => {
-                    acc[cur.singleMetricId] = cur.singleCompleted;
-                    return acc;
-                },
-                {}
-            );
-        } catch {
-            return {};
-        }
-    };
-
-    useEffect(() => {
-        let isMounted = true;
-        const loadAndMerge = async () => {
-            const today = getToday();
-            const lastReset = await AsyncStorage.getItem(RESET_KEY);
-
-            let baseChallenges = splitChallenges(userChallenges);
-
-            if (lastReset !== today) {
-                await AsyncStorage.setItem(RESET_KEY, today);
-                await AsyncStorage.removeItem(`${PROGRESS_KEY}_${today}`);
-                if (isMounted) {
-                    setSingleMetricChallenges(baseChallenges);
-                    setProgressLoaded(true);
-                }
-            } else {
-                const stored = await loadProgress();
-                if (isMounted) {
-                    setSingleMetricChallenges(
-                        baseChallenges.map((c) =>
-                            stored[c.singleMetricId] !== undefined
-                                ? { ...c, singleCompleted: stored[c.singleMetricId] }
-                                : c
-                        )
-                    );
-                    setProgressLoaded(true);
-                }
-            }
-        };
-        loadAndMerge();
-        return () => { isMounted = false; };
-    }, [userChallenges.length]);
-
-    useEffect(() => {
-        if (progressLoaded) {
-            saveProgress(singleMetricChallenges);
-        }
-    }, [singleMetricChallenges, progressLoaded]);
-
-    // Add new animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const slideAnim = useRef(new Animated.Value(-100)).current;
@@ -274,9 +196,9 @@ const ChallengeScreen = () => {
     const refreshRotate = useRef(new Animated.Value(0)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
-    // Animation setup
     useEffect(() => {
         fetchFromBackend();
+        refresh();
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -306,7 +228,7 @@ const ChallengeScreen = () => {
         }).start();
     }, [filter]);
 
-    const buttonPressAnimation = () => {
+    const buttonPressAnimation = useCallback(() => {
         Animated.sequence([
             Animated.timing(scaleAnim, {
                 toValue: 0.9,
@@ -319,9 +241,9 @@ const ChallengeScreen = () => {
                 useNativeDriver: true,
             }),
         ]).start();
-    };
+    }, [scaleAnim]);
 
-    const startRefreshAnimation = () => {
+    const startRefreshAnimation = useCallback(() => {
         refreshRotate.setValue(0);
         Animated.timing(refreshRotate, {
             toValue: 1,
@@ -329,9 +251,9 @@ const ChallengeScreen = () => {
             easing: Easing.linear,
             useNativeDriver: true,
         }).start();
-    };
+    }, [refreshRotate]);
 
-    const startRotationAnimation = () => {
+    const startRotationAnimation = useCallback(() => {
         rotateAnim.setValue(0);
         Animated.loop(
             Animated.timing(rotateAnim, {
@@ -341,7 +263,7 @@ const ChallengeScreen = () => {
                 useNativeDriver: true,
             })
         ).start();
-    };
+    }, [rotateAnim]);
 
     const spin = refreshRotate.interpolate({
         inputRange: [0, 1],
@@ -353,13 +275,13 @@ const ChallengeScreen = () => {
         outputRange: ["0deg", "360deg"],
     });
 
-    const showModal = (message: string, confirmAction?: () => void) => {
+    const showModal = useCallback((message: string, confirmAction?: () => void) => {
         setModalMessage(message);
         setPendingAction(() => confirmAction || null);
         setModalVisible(true);
-    };
+    }, []);
 
-    const handleUpdateChallenge = async (
+    const handleUpdateChallenge = useCallback(async (
         singleMetricId: string,
         completed: boolean
     ) => {
@@ -373,47 +295,156 @@ const ChallengeScreen = () => {
         showModal(
             `Challenge ${completed ? "completed" : "cancelled"} successfully!`
         );
-    };
+    }, [showModal]);
 
-    const handleComplete = (singleMetricId: string) => {
+    const handleComplete = useCallback((singleMetricId: string) => {
         showModal(
             "Are you sure you want to mark this challenge as completed?",
             () => handleUpdateChallenge(singleMetricId, true)
         );
-    };
+    }, [showModal, handleUpdateChallenge]);
 
-    const handleCancel = (singleMetricId: string) => {
+    const handleCancel = useCallback((singleMetricId: string) => {
         showModal("Are you sure you want to un-complete this challenge?", () =>
             handleUpdateChallenge(singleMetricId, false)
         );
-    };
+    }, [showModal, handleUpdateChallenge]);
 
-    const getChallengeProgress = (challenge: SingleMetricChallenge) => {
-        if (runHistory.length === 0) return 0;
+    const onRefresh = useCallback(() => {
+        startRefreshAnimation();
+        fetchFromBackend(true);
+        refresh();
+    }, [startRefreshAnimation, fetchFromBackend, refresh]);
 
-        if (challenge.metricType === "Distance") {
-            const totalDistance = runHistory.reduce(
-                (sum, run) => sum + run.distance,
-                0
-            );
-            return Math.min(totalDistance / challenge.distance, 1);
-        }
+    const onRefreshControl = useCallback(() => {
+        startRotationAnimation();
+        fetchFromBackend(true);
+        refresh()
+    }, [startRotationAnimation, fetchFromBackend, refresh]);
 
-        if (challenge.metricType === "Duration") {
-            const totalDuration = runHistory.reduce(
-                (sum, run) => sum + run.duration,
-                0
-            );
-            return Math.min(totalDuration / challenge.duration, 1);
-        }
-
-        if (challenge.metricType === "Speed") {
-            const latestRun = runHistory[runHistory.length - 1];
-            return Math.min(latestRun.speed / challenge.speed, 1);
-        }
-
-        return 0;
-    };
+    const renderChallengeItem = useCallback(({ item }: { item: SingleMetricChallenge }) => {
+        const progress = getChallengeProgress(item, todaysRuns);
+        return (
+            <Animated.View
+                style={[
+                    { flexDirection: "row", marginBottom: 20 },
+                    {
+                        opacity: fadeAnim,
+                        transform: [
+                            {
+                                translateX: fadeAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [50, 0],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                <View
+                    style={styles.challengeItem}
+                    testID={`challenge-${item.singleMetricId}`}
+                >
+                    <Animated.View
+                        style={[
+                            styles.iconContainer,
+                            {
+                                transform: [
+                                    {
+                                        scale: bounceAnim,
+                                    },
+                                ],
+                            },
+                        ]}
+                    >
+                        <MaterialCommunityIcons
+                            name={item.icon}
+                            size={24}
+                            color="#fff"
+                        />
+                    </Animated.View>
+                    <View style={styles.challengeInfo}>
+                        <Text style={styles.challengeType}>
+                            {item.metricType} Challenge
+                        </Text>
+                        <Text style={styles.statValue}>
+                            {item.value} {item.unit}
+                        </Text>
+                        <View style={{ marginTop: 8 }}>
+                            {progress >= 1 ? (
+                                <Text
+                                    style={{
+                                        color: "#4CAF50",
+                                        fontWeight: "bold",
+                                        fontSize: 14,
+                                    }}
+                                >
+                                    Completed
+                                </Text>
+                            ) : (
+                                <View style={styles.progressBar}>
+                                    <View
+                                        style={{
+                                            width: `${progress * 100}%`,
+                                            height: 8,
+                                            backgroundColor: "#4CAF50",
+                                            borderRadius: 4,
+                                        }}
+                                    />
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                </View>
+                <Animated.View
+                    style={[
+                        styles.actionButtons,
+                        { transform: [{ scale: scaleAnim }] },
+                    ]}
+                >
+                    <TouchableOpacity
+                        style={[
+                            styles.checkButton,
+                            item.singleCompleted && styles.buttonDisabled,
+                        ]}
+                        onPress={() => {
+                            buttonPressAnimation();
+                            handleComplete(item.singleMetricId);
+                        }}
+                    >
+                        {item.singleCompleted ? (
+                            <Ionicons
+                                name="checkmark-done"
+                                size={18}
+                                color="#fff"
+                            />
+                        ) : (
+                            <Ionicons
+                                testID="checkmark-button"
+                                name="checkmark"
+                                size={18}
+                                color="#fff"
+                            />
+                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.cancelButton]}
+                        onPress={() => {
+                            buttonPressAnimation();
+                            handleCancel(item.singleMetricId);
+                        }}
+                    >
+                        <Ionicons
+                            testID="cancel-button"
+                            name="close"
+                            size={18}
+                            color="#fff"
+                        />
+                    </TouchableOpacity>
+                </Animated.View>
+            </Animated.View>
+        );
+    }, [getChallengeProgress, todaysRuns, fadeAnim, bounceAnim, scaleAnim, buttonPressAnimation, handleComplete, handleCancel]);
 
     return (
         <View style={styles.container}>
@@ -492,144 +523,13 @@ const ChallengeScreen = () => {
                 <FlatList
                     data={filteredChallenges}
                     keyExtractor={(item) => item.singleMetricId}
-                    renderItem={({ item }) => (
-                        <Animated.View
-                            style={[
-                                { flexDirection: "row", marginBottom: 20 },
-                                {
-                                    opacity: fadeAnim,
-                                    transform: [
-                                        {
-                                            translateX: fadeAnim.interpolate({
-                                                inputRange: [0, 1],
-                                                outputRange: [50, 0],
-                                            }),
-                                        },
-                                    ],
-                                },
-                            ]}
-                        >
-                            <View
-                                style={styles.challengeItem}
-                                testID={`challenge-${item.singleMetricId}`}
-                            >
-                                <Animated.View
-                                    style={[
-                                        styles.iconContainer,
-                                        {
-                                            transform: [
-                                                {
-                                                    scale: bounceAnim,
-                                                },
-                                            ],
-                                        },
-                                    ]}
-                                >
-                                    <MaterialCommunityIcons
-                                        name={item.icon}
-                                        size={24}
-                                        color="#fff"
-                                    />
-                                </Animated.View>
-                                <View style={styles.challengeInfo}>
-                                    <Text style={styles.challengeType}>
-                                        {item.metricType} Challenge
-                                    </Text>
-                                    <Text style={styles.statValue}>
-                                        {item.value} {item.unit}
-                                    </Text>
-                                    <View style={{ marginTop: 8 }}>
-                                        {getChallengeProgress(item) >= 1 ? (
-                                            <Text
-                                                style={{
-                                                    color: "#4CAF50",
-                                                    fontWeight: "bold",
-                                                    fontSize: 14,
-                                                }}
-                                            >
-                                                Completed
-                                            </Text>
-                                        ) : (
-                                            <View style={styles.progressBar}>
-                                                <View
-                                                    style={{
-                                                        width: `${
-                                                            getChallengeProgress(
-                                                                item
-                                                            ) * 100
-                                                        }%`,
-                                                        height: 8,
-                                                        backgroundColor:
-                                                            "#4CAF50",
-                                                        borderRadius: 4,
-                                                    }}
-                                                />
-                                            </View>
-                                        )}
-                                    </View>
-                                </View>
-                            </View>
-                            <Animated.View
-                                style={[
-                                    styles.actionButtons,
-                                    { transform: [{ scale: scaleAnim }] },
-                                ]}
-                            >
-                                <TouchableOpacity
-                                    style={[
-                                        styles.checkButton,
-                                        item.singleCompleted &&
-                                            styles.buttonDisabled,
-                                    ]}
-                                    onPress={() => {
-                                        buttonPressAnimation();
-                                        handleComplete(item.singleMetricId);
-                                    }}
-                                >
-                                    {item.singleCompleted ? (
-                                        <Ionicons
-                                            name="checkmark-done"
-                                            size={18}
-                                            color="#fff"
-                                        />
-                                    ) : (
-                                        <Ionicons
-                                            testID="checkmark-button"
-                                            name="checkmark"
-                                            size={18}
-                                            color="#fff"
-                                        />
-                                    )}
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.cancelButton]}
-                                    onPress={() => {
-                                        buttonPressAnimation();
-                                        handleCancel(item.singleMetricId);
-                                    }}
-                                >
-                                    <Ionicons
-                                        testID="cancel-button"
-                                        name="close"
-                                        size={18}
-                                        color="#fff"
-                                    />
-                                </TouchableOpacity>
-                            </Animated.View>
-                        </Animated.View>
-                    )}
-                    onRefresh={() => {
-                        startRefreshAnimation();
-                        fetchFromBackend(true);
-                    }}
+                    renderItem={renderChallengeItem}
+                    onRefresh={onRefresh}
                     refreshing={refreshing}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
-                            onRefresh={() => {
-                                startRotationAnimation();
-                                fetchFromBackend(true);
-                            }}
+                            onRefresh={onRefreshControl}
                             tintColor="#007bff"
                             colors={["#007bff"]}
                             progressViewOffset={20}

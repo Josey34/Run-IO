@@ -11,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+import { useRunHistory } from "../../hooks/runHistoryContext";
 import { useAuth } from "../../hooks/useAuth";
 import useFetch from "../../hooks/useFetch";
 import { ErrorModalEmitter } from "../api/api_service";
@@ -86,15 +87,17 @@ const StatisticsScreen = () => {
     const statsAnim = useRef(new Animated.Value(0)).current;
     const [statistics, setStatistics] = useState<StatisticsData | null>(null);
     const { user } = useAuth();
-    const { loading, error, fetchRun } = useFetch<Run[]>("");
+    const { loading, error } = useFetch<Run[]>("");
     const [refreshing, setRefreshing] = useState(false);
+    const lastFetchRef = useRef<number>(0)
     const router = useRouter();
+    const { runHistory } = useRunHistory();
 
     const loadRuns = async () => {
         if (!user?.uid) return;
 
         try {
-            const runs = await fetchRun(user.uid);
+            const runs = runHistory.filter(run => run.userId === user.uid);
             if (runs && Array.isArray(runs)) {
                 const stats = calculateStatistics(runs);
                 setStatistics(stats);
