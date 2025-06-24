@@ -1,150 +1,143 @@
 # Run-IO
 
-## Description
+## Overview
 
-Run-IO is a React Native Expo application designed to track and enhance your running experience. Built with TypeScript and JavaScript, it offers features similar to popular running apps like Strava, including real-time tracking, statistics, and social features.
+**Run-IO** is a React Native Expo application for tracking and improving your running experience. It provides real-time GPS tracking, personalized recommendations, statistics, challenges, and weather integration.
 
 ## Features
 
--   **User Authentication**: Secure login and registration system
--   **Real-time Run Tracking**: Track your runs with GPS and get live statistics
--   **Statistics Dashboard**: View detailed statistics of your running history
--   **Challenge System**: Participate in running challenges
--   **Weather Integration**: Get real-time weather updates for your runs
--   **Interactive Maps**: Visual representation of your running routes
--   **Performance Analytics**: Detailed analysis of your running performance
+- **User Authentication**: Secure registration and login
+- **Real-time Run Tracking**: GPS-based run tracking with live stats
+- **Statistics Dashboard**: Visualize your running history and progress
+- **Challenge System**: Daily and custom running challenges using machine learning
+- **Weather Integration**: Real-time weather for your location
+- **Interactive Maps**: Route visualization using React Native Maps
+- **Performance Analytics**: In-depth analysis of your runs
 
-## Technologies Used
+## Tech Stack
 
--   React Native
--   Expo
--   TypeScript
--   JavaScript
--   Expo Location
--   React Native Maps
--   Expo Router
--   Chart.js for statistics
+- React Native (Expo)
+- TypeScript & JavaScript
+- Expo Location, Expo Router, Expo Sensors
+- React Native Maps
+- Chart.js (for statistics)
+- Axios (API requests)
+- EAS Build (for deployment)
 
 ## Prerequisites
 
-Before you begin, ensure you have installed:
+- Node.js (16+, preferably 22)
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- Android Studio (for Android)
+- Xcode (for iOS, macOS only)
 
--   Node.js (version 16 or higher)
--   npm or yarn
--   Expo CLI (`npm install -g expo-cli`)
--   Android Studio (for Android development)
--   Xcode (for iOS development, macOS only)
-
-## Installation
+## Getting Started
 
 1. **Clone the repository:**
-
-```bash
-git clone https://github.com/Josey34/Run-IO.git
-cd Run-IO
-```
+    ```bash
+    git clone https://github.com/Josey34/Run-IO.git
+    cd Run-IO
+    ```
 
 2. **Install dependencies:**
-
-```bash
-npm install
-```
+    ```bash
+    npm install
+    ```
 
 3. **Start the development server:**
-
-```bash
-npm start
-```
+    ```bash
+    npm start
+    ```
 
 ## Building the App
 
-### Development Build
+- **Development Build:**
+    ```bash
+    npm run build:development
+    # or
+    eas build -p android --profile development
+    ```
 
-For testing during development:
+- **Preview Build (APK):**
+    ```bash
+    npm run build:preview
+    # or
+    eas build -p android --profile preview
+    ```
 
-```bash
-npm run build:development
-# or
-eas build -p android --profile development
-```
+- **Production Build:**
+    ```bash
+    npm run build:production
+    # or
+    eas build -p android --profile production
+    ```
 
-### Preview Build (APK)
+### EAS Build Profiles
 
-For sharing with testers:
-
-```bash
-npm run build:preview
-# or
-eas build -p android --profile preview
-```
-
-### Production Build
-
-For Play Store submission:
-
-```bash
-npm run build:production
-# or
-eas build -p android --profile production
-```
-
-### Build Configuration
-
-The project uses EAS Build with different profiles:
-
+See `eas.json` for build profiles. Example:
 ```json
 {
-    "development": {
-        "developmentClient": true,
-        "distribution": "internal"
-    },
-    "preview": {
-        "distribution": "internal",
-        "android": {
-            "buildType": "apk"
-        }
-    },
-    "production": {
-        "android": {
-            "buildType": "app-bundle"
-        }
-    }
+    "development": { "developmentClient": true, "distribution": "internal" },
+    "preview": { "distribution": "internal", "android": { "buildType": "apk" } },
+    "production": { "android": { "buildType": "app-bundle" } }
 }
 ```
 
 ## Environment Setup
 
-1. **Configure app.json:**
+- Configure `app.json` for package name, permissions, and icons.
+- Set up `eas.json` for build profiles.
+- Ensure Android/iOS permissions are set for location and background tasks.
 
-    - Update the `android.package` name
-    - Set appropriate permissions
-    - Configure adaptive icons
-
-2. **Set up eas.json:**
-
-    - Define build profiles
-    - Configure build settings
-
-3. **Android Setup:**
-    - Configure SDK paths
-    - Set up necessary permissions
-
-## Available Scripts
+## Scripts
 
 ```json
 {
-    "scripts": {
-        "start": "expo start",
-        "android": "expo start --android",
-        "ios": "expo start --ios",
-        "web": "expo start --web",
-        "build:development": "eas build --profile development --platform android",
-        "build:preview": "eas build --profile preview --platform android",
-        "build:production": "eas build --profile production --platform android",
-        "build:list": "eas build:list",
-        "build:logs": "eas build:logs"
-    }
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build:development": "eas build --profile development --platform android",
+    "build:preview": "eas build --profile preview --platform android",
+    "build:production": "eas build --profile production --platform android",
+    "build:list": "eas build:list",
+    "build:logs": "eas build:logs"
 }
+```
+
+## Troubleshooting
+
+- **Clear build cache:**
+    ```bash
+    eas build:clean
+    ```
+- **Rebuild with verbose logging:**
+    ```bash
+    eas build -p android --profile preview --clear-cache --verbose
+    ```
+- **Common issues:**
+    - Check permissions in `app.json`
+    - Ensure native dependencies are compatible
+    - Verify Android/iOS SDK setup
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/YourFeature`)
+3. Commit your changes
+4. Push to your branch
+5. Open a Pull Request
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
+
+## Contact
+
+- GitHub: [@Josey34](https://github.com/Josey34)
+- Project: [https://github.com/Josey34/Run-IO](https://github.com/Josey34/Run-IO)
+- Linkedin: (www.linkedin.com/in/josey-takesan-88713230a)
 ```
 
 ## Troubleshooting
